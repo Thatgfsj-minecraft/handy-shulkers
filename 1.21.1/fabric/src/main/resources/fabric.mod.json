@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "handyshulkers",
+  "version": "${version}",
+  "name": "Handy Shulkers",
+  "description": "Open shulker boxes from any mod directly in your inventory. Tag-driven compatibility, opens against any block, no head slot involved.",
+  "authors": [
+    "Thatgfsj"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.handyshulkers.fabric.HandyShulkersFabric"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "minecraft": ">=1.21.1 <1.21.2",
+    "java": ">=21"
+  }
+}
