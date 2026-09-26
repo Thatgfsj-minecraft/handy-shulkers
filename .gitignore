@@ -11,3 +11,4 @@ runs/
 .settings/
 remappedSrc/
 .kotlin/
+.mimosa/
