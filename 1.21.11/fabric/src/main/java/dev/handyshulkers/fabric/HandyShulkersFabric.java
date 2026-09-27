@@ -1,7 +1,7 @@
 package dev.handyshulkers.fabric;
 
+import dev.handyshulkers.HandItemUse;
 import dev.handyshulkers.HandyShulkersConfig;
-import dev.handyshulkers.ShulkerOpenLogic;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
@@ -23,20 +23,34 @@ public class HandyShulkersFabric implements ModInitializer {
         UseItemCallback.EVENT.register(HandyShulkersFabric::onUseItem);
     }
 
+    /**
+     * Plain right-click on a block: a block with its own menu (chest, crafting
+     * table, ...) always wins; otherwise the held functional item is used
+     * instead of placing it. Sneaking stays vanilla (place).
+     */
     private static InteractionResult onUseBlock(Player player, Level level, InteractionHand hand, BlockHitResult hitResult) {
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
+        }
         ItemStack stack = player.getItemInHand(hand);
-        if (!ShulkerOpenLogic.isOpenable(stack)) {
+        if (!HandItemUse.isFunctional(stack)) {
             return InteractionResult.PASS;
         }
         BlockPos pos = hitResult.getBlockPos();
-        return ShulkerOpenLogic.tryOpenOnBlock(player, pos, stack);
+        if (level.getBlockState(pos).getMenuProvider(level, pos) != null) {
+            return InteractionResult.PASS;
+        }
+        return HandItemUse.useFromHand(player, stack);
     }
 
     private static InteractionResult onUseItem(Player player, Level level, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        if (HandyShulkersConfig.get().openInAir && ShulkerOpenLogic.isOpenable(stack)) {
-            return ShulkerOpenLogic.tryOpen(player, stack);
+        if (player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
         }
-        return InteractionResult.PASS;
+        ItemStack stack = player.getItemInHand(hand);
+        if (!HandItemUse.isFunctional(stack)) {
+            return InteractionResult.PASS;
+        }
+        return HandItemUse.useFromHand(player, stack);
     }
 }

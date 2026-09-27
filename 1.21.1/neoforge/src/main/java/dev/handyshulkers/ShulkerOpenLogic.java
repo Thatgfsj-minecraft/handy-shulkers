@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
@@ -16,21 +15,8 @@ import net.minecraft.world.level.block.ShulkerBoxBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
- * Shared decision logic for opening a box from the hand.
- *
- * <p>Interaction rules (server authoritative; the client never predicts the
- * open, so every vanilla interaction keeps working while holding a box):
- * <ul>
- *   <li>Right-click: vanilla wins. Blocks keep working — beds sleep,
- *       crafting tables and looms open, buttons press; on plain ground the
- *       box is placed as usual.</li>
- *   <li>Sneak + right-click: opens the box. This is the Quick Shulker style
- *       trigger and there is no head slot involved — nothing is ever
- *       equipped, so helmets do not matter at all.</li>
- *   <li>Set {@code requireSneak} to false to open on plain right-click
- *       instead; be aware that then blocks without their own menu (beds,
- *       buttons, doors) can no longer be used while holding a box.</li>
- * </ul>
+ * Shulker box specific logic: tag membership, storage safety and row sizing.
+ * The actual hand-use dispatch lives in {@link HandItemUse}.
  */
 public final class ShulkerOpenLogic {
 
@@ -79,36 +65,13 @@ public final class ShulkerOpenLogic {
     }
 
     /**
-     * Opens the box, on the server only. The client side returns success so
-     * the hand swings and no placement is predicted.
+     * Opens the box inventory. Server side only; every gate (sneak, fake
+     * players, spectator, open menus) has already been applied by
+     * {@link HandItemUse}.
      */
-    public static InteractionResult tryOpen(Player player, ItemStack stack) {
+    public static InteractionResult openMenu(ServerPlayer serverPlayer, ItemStack stack) {
         HandyShulkersConfig config = HandyShulkersConfig.get();
-        if (!isOpenable(stack)) {
-            return InteractionResult.PASS;
-        }
-        if (config.requireSneak != player.isShiftKeyDown()) {
-            return InteractionResult.PASS;
-        }
         if (!config.allowUnknownStorage && !hasKnownStorage(stack)) {
-            return InteractionResult.PASS;
-        }
-        // Server authoritative: the client must stay PASS so the use packet is
-        // still sent. A client-side success would swallow the interaction and
-        // break beds, buttons and doors entirely.
-        if (player.level().isClientSide()) {
-            return InteractionResult.PASS;
-        }
-        if (!(player instanceof ServerPlayer serverPlayer)) {
-            return InteractionResult.PASS;
-        }
-        if (player.isSpectator()) {
-            return InteractionResult.PASS;
-        }
-        if (!config.allowFakePlayers && player.getClass() != ServerPlayer.class) {
-            return InteractionResult.PASS;
-        }
-        if (serverPlayer.containerMenu != serverPlayer.inventoryMenu) {
             return InteractionResult.PASS;
         }
         int rows = rowsFor(stack);
@@ -119,23 +82,10 @@ public final class ShulkerOpenLogic {
     }
 
     /**
-     * Blocks that open a menu of their own keep their vanilla behaviour.
+     * Blocks that open a menu of their own (chests, crafting tables, looms,
+     * furnaces, ...) always keep their vanilla behaviour.
      */
     public static boolean blockHasOwnMenu(Player player, BlockPos pos) {
         return player.level().getBlockState(pos).getMenuProvider(player.level(), pos) != null;
-    }
-
-    /**
-     * Shared gate for "right click on a block" handlers.
-     */
-    public static InteractionResult tryOpenOnBlock(Player player, BlockPos pos, ItemStack stack) {
-        HandyShulkersConfig config = HandyShulkersConfig.get();
-        if (!config.openOnBlocks) {
-            return InteractionResult.PASS;
-        }
-        if (!config.requireSneak && !player.isShiftKeyDown() && blockHasOwnMenu(player, pos)) {
-            return InteractionResult.PASS;
-        }
-        return tryOpen(player, stack);
     }
 }

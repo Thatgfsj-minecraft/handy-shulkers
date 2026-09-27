@@ -1,16 +1,15 @@
 package dev.handyshulkers.neoforge;
 
+import dev.handyshulkers.HandItemUse;
 import dev.handyshulkers.HandyShulkers;
 import dev.handyshulkers.HandyShulkersConfig;
-import dev.handyshulkers.ShulkerOpenLogic;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLPaths;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
@@ -22,15 +21,26 @@ public class HandyShulkersNeoForge {
         NeoForge.EVENT_BUS.register(HandyShulkersNeoForge.class);
     }
 
+    /**
+     * Plain right-click on a block: a block with its own menu (chest, crafting
+     * table, ...) always wins; otherwise the held functional item is used
+     * instead of placing it. Sneaking stays vanilla (place).
+     */
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        Level level = event.getLevel();
-        ItemStack stack = event.getEntity().getItemInHand(event.getHand());
-        if (!ShulkerOpenLogic.isOpenable(stack)) {
+        if (event.getEntity().isShiftKeyDown()) {
             return;
         }
+        ItemStack stack = event.getEntity().getItemInHand(event.getHand());
+        if (!HandItemUse.isFunctional(stack)) {
+            return;
+        }
+        Level level = event.getLevel();
         BlockPos pos = event.getPos();
-        InteractionResult result = ShulkerOpenLogic.tryOpenOnBlock(event.getEntity(), pos, stack);
+        if (level.getBlockState(pos).getMenuProvider(level, pos) != null) {
+            return;
+        }
+        InteractionResult result = HandItemUse.useFromHand(event.getEntity(), stack);
         if (result != InteractionResult.PASS) {
             event.setCanceled(true);
             event.setCancellationResult(result);
@@ -39,14 +49,14 @@ public class HandyShulkersNeoForge {
 
     @SubscribeEvent
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (event.getEntity().isShiftKeyDown()) {
+            return;
+        }
         ItemStack stack = event.getEntity().getItemInHand(event.getHand());
-        if (!ShulkerOpenLogic.isOpenable(stack)) {
+        if (!HandItemUse.isFunctional(stack)) {
             return;
         }
-        if (!HandyShulkersConfig.get().openInAir) {
-            return;
-        }
-        InteractionResult result = ShulkerOpenLogic.tryOpen(event.getEntity(), stack);
+        InteractionResult result = HandItemUse.useFromHand(event.getEntity(), stack);
         if (result != InteractionResult.PASS) {
             event.setCanceled(true);
             event.setCancellationResult(result);
