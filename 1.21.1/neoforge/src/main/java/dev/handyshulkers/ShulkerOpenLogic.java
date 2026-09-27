@@ -18,17 +18,18 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 /**
  * Shared decision logic for opening a box from the hand.
  *
- * <p>Interaction rules (all server authoritative, client only predicts):
+ * <p>Interaction rules (server authoritative; the client never predicts the
+ * open, so every vanilla interaction keeps working while holding a box):
  * <ul>
- *   <li>Right-click the air with a box: opens it.</li>
- *   <li>Right-click a block that has no menu of its own: opens the box —
- *       this is the Quick Shulker style "works against any block" behaviour,
- *       minus the head slot. Nothing is ever equipped, so helmets do not
- *       matter at all.</li>
- *   <li>Right-click a block with a menu (chest, crafting table, ...): the
- *       block wins, the box is not opened.</li>
- *   <li>Sneaking always keeps vanilla behaviour (place the box, use the
- *       block), unless {@code requireSneak} flips the trigger.</li>
+ *   <li>Right-click: vanilla wins. Blocks keep working — beds sleep,
+ *       crafting tables and looms open, buttons press; on plain ground the
+ *       box is placed as usual.</li>
+ *   <li>Sneak + right-click: opens the box. This is the Quick Shulker style
+ *       trigger and there is no head slot involved — nothing is ever
+ *       equipped, so helmets do not matter at all.</li>
+ *   <li>Set {@code requireSneak} to false to open on plain right-click
+ *       instead; be aware that then blocks without their own menu (beds,
+ *       buttons, doors) can no longer be used while holding a box.</li>
  * </ul>
  */
 public final class ShulkerOpenLogic {
@@ -92,8 +93,11 @@ public final class ShulkerOpenLogic {
         if (!config.allowUnknownStorage && !hasKnownStorage(stack)) {
             return InteractionResult.PASS;
         }
+        // Server authoritative: the client must stay PASS so the use packet is
+        // still sent. A client-side success would swallow the interaction and
+        // break beds, buttons and doors entirely.
         if (player.level().isClientSide()) {
-            return InteractionResult.SUCCESS;
+            return InteractionResult.PASS;
         }
         if (!(player instanceof ServerPlayer serverPlayer)) {
             return InteractionResult.PASS;

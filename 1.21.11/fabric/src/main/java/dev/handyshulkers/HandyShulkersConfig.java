@@ -9,12 +9,18 @@ import java.nio.file.Path;
 
 public final class HandyShulkersConfig {
 
-    /** Right-clicking while aiming at the air opens the box. */
+    /** When false, right-clicking while aiming at the air opens the box. */
     public boolean openInAir = true;
-    /** Right-clicking a block that has no menu of its own opens the box. */
+    /** Whether sneak + right-click on a block may open the box. */
     public boolean openOnBlocks = true;
-    /** When true, only sneaking opens boxes; sneaking otherwise never opens. */
-    public boolean requireSneak = false;
+    /**
+     * True (default, Quick Shulker style): sneak + right-click opens the box,
+     * plain right-click keeps vanilla behaviour so beds, crafting tables and
+     * buttons all keep working while holding a box.
+     * False: plain right-click opens the box; blocks without their own menu
+     * (beds, buttons, doors) can then no longer be used while holding one.
+     */
+    public boolean requireSneak = true;
     /**
      * When false, items whose storage is not the vanilla container component
      * are refused, so nothing can ever be written into a component the owning
