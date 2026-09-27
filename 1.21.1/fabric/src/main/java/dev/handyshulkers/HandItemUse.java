@@ -156,7 +156,7 @@ public final class HandItemUse {
             sendProblem(player, Player.BedSleepingProblem.OBSTRUCTED);
             return InteractionResult.SUCCESS;
         }
-        BlockState bed = bedState(stack);
+        BlockState bed = bedState(stack, player.getDirection());
         level.setBlock(foot, bed.setValue(BedBlock.PART, BedPart.FOOT), 3);
         level.setBlock(head, bed.setValue(BedBlock.PART, BedPart.HEAD), 3);
         Either<Player.BedSleepingProblem, net.minecraft.util.Unit> result = player.startSleepInBed(foot);
@@ -169,11 +169,18 @@ public final class HandItemUse {
         return InteractionResult.SUCCESS;
     }
 
-    private static BlockState bedState(ItemStack stack) {
+    private static BlockState bedState(ItemStack stack, Direction facing) {
+        BlockState state;
         if (stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof BedBlock) {
-            return blockItem.getBlock().defaultBlockState();
+            state = blockItem.getBlock().defaultBlockState();
+        } else {
+            state = Blocks.RED_BED.defaultBlockState();
         }
-        return Blocks.RED_BED.defaultBlockState();
+        // modded pseudo-beds may lack vanilla bed properties
+        if (state.hasProperty(BedBlock.FACING)) {
+            state = state.setValue(BedBlock.FACING, facing);
+        }
+        return state;
     }
 
     private static void sendProblem(ServerPlayer player, Player.BedSleepingProblem problem) {
