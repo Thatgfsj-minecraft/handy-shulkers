@@ -28,7 +28,7 @@ public class HandyShulkersNeoForge {
      */
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        if (event.getEntity().isShiftKeyDown()) {
+        if (HandyShulkersConfig.get().requireSneak != event.getEntity().isShiftKeyDown()) {
             return;
         }
         ItemStack stack = event.getEntity().getItemInHand(event.getHand());
@@ -49,7 +49,7 @@ public class HandyShulkersNeoForge {
 
     @SubscribeEvent
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
-        if (event.getEntity().isShiftKeyDown()) {
+        if (HandyShulkersConfig.get().requireSneak != event.getEntity().isShiftKeyDown()) {
             return;
         }
         ItemStack stack = event.getEntity().getItemInHand(event.getHand());

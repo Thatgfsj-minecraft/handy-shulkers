@@ -1,15 +1,21 @@
 package dev.handyshulkers;
 
-import com.mojang.datafixers.util.Either;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.attribute.BedRule;
+import net.minecraft.world.attribute.EnvironmentAttributes;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.LoomMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.phys.AABB;
+
+import java.util.List;
 
 /**
  * Turns plain right-clicks with functional items into their use action:
@@ -65,24 +71,59 @@ public final class HandItemUse {
         }
         if (stack.is(HandyShulkers.CRAFTING_TABLES)) {
             serverPlayer.openMenu(new SimpleMenuProvider(
-                    (id, inventory, p) -> new CraftingMenu(id, inventory,
-                            ContainerLevelAccess.create(serverPlayer.level(), serverPlayer.blockPosition())),
+                    (id, inventory, p) -> new HandCraftingMenu(id, inventory,
+                            serverPlayer.level(), serverPlayer.blockPosition()),
                     Component.translatable("container.crafting")));
             return InteractionResult.SUCCESS_SERVER;
         }
         if (stack.is(HandyShulkers.LOOMS)) {
             serverPlayer.openMenu(new SimpleMenuProvider(
-                    (id, inventory, p) -> new LoomMenu(id, inventory,
-                            ContainerLevelAccess.create(serverPlayer.level(), serverPlayer.blockPosition())),
+                    (id, inventory, p) -> new HandLoomMenu(id, inventory,
+                            serverPlayer.level(), serverPlayer.blockPosition()),
                     Component.translatable("container.loom")));
             return InteractionResult.SUCCESS_SERVER;
         }
         if (stack.is(HandyShulkers.BEDS)) {
-            Either<Player.BedSleepingProblem, net.minecraft.util.Unit> result =
-                    serverPlayer.startSleepInBed(serverPlayer.blockPosition());
-            result.ifLeft(problem -> serverPlayer.displayClientMessage(problem.message(), true));
-            return InteractionResult.SUCCESS_SERVER;
+            return sleepInPlace(serverPlayer);
         }
         return InteractionResult.PASS;
+    }
+
+    /**
+     * Sleeps right where the player stands. Vanilla startSleepInBed cannot be
+     * used here: it reads the bed's FACING property from the target position
+     * and throws on anything that is not a bed block. The day/night, dimension
+     * and thunder rules are taken from the position's BED_RULE environment
+     * attribute so they stay identical to vanilla, then the plain sleep state
+     * is entered, which still drives vanilla's night-skipping.
+     */
+    private static InteractionResult sleepInPlace(ServerPlayer player) {
+        ServerLevel level = player.level();
+        BlockPos pos = player.blockPosition();
+        BedRule bedRule = level.environmentAttributes().getValue(EnvironmentAttributes.BED_RULE, pos);
+        if (bedRule != null && !bedRule.canSleep(level)) {
+            Player.BedSleepingProblem problem = bedRule.asProblem();
+            if (problem != null && problem.message() != null) {
+                player.displayClientMessage(problem.message(), true);
+            }
+            return InteractionResult.SUCCESS_SERVER;
+        }
+        List<Monster> monsters = level.getEntitiesOfClass(Monster.class,
+                player.getBoundingBox().inflate(8.0D, 5.0D, 8.0D),
+                monster -> monster.isPreventingPlayerRest(level, player));
+        if (!monsters.isEmpty()) {
+            sendProblem(player, Player.BedSleepingProblem.NOT_SAFE);
+            return InteractionResult.SUCCESS_SERVER;
+        }
+        player.startSleeping(pos);
+        level.updateSleepingPlayerList();
+        return InteractionResult.SUCCESS_SERVER;
+    }
+
+    private static void sendProblem(ServerPlayer player, Player.BedSleepingProblem problem) {
+        Component message = problem.message();
+        if (message != null) {
+            player.displayClientMessage(message, true);
+        }
     }
 }

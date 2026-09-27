@@ -29,7 +29,7 @@ public class HandyShulkersFabric implements ModInitializer {
      * instead of placing it. Sneaking stays vanilla (place).
      */
     private static InteractionResult onUseBlock(Player player, Level level, InteractionHand hand, BlockHitResult hitResult) {
-        if (player.isShiftKeyDown()) {
+        if (HandyShulkersConfig.get().requireSneak != player.isShiftKeyDown()) {
             return InteractionResult.PASS;
         }
         ItemStack stack = player.getItemInHand(hand);
@@ -44,7 +44,7 @@ public class HandyShulkersFabric implements ModInitializer {
     }
 
     private static InteractionResult onUseItem(Player player, Level level, InteractionHand hand) {
-        if (player.isShiftKeyDown()) {
+        if (HandyShulkersConfig.get().requireSneak != player.isShiftKeyDown()) {
             return InteractionResult.PASS;
         }
         ItemStack stack = player.getItemInHand(hand);

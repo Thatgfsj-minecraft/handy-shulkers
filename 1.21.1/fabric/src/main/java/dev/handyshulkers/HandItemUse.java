@@ -1,15 +1,19 @@
 package dev.handyshulkers;
 
-import com.mojang.datafixers.util.Either;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.CraftingMenu;
 import net.minecraft.world.inventory.LoomMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.phys.AABB;
+
+import java.util.List;
 
 /**
  * Turns plain right-clicks with functional items into their use action:
@@ -65,24 +69,58 @@ public final class HandItemUse {
         }
         if (stack.is(HandyShulkers.CRAFTING_TABLES)) {
             serverPlayer.openMenu(new SimpleMenuProvider(
-                    (id, inventory, p) -> new CraftingMenu(id, inventory,
-                            ContainerLevelAccess.create(serverPlayer.level(), serverPlayer.blockPosition())),
+                    (id, inventory, p) -> new HandCraftingMenu(id, inventory,
+                            serverPlayer.level(), serverPlayer.blockPosition()),
                     Component.translatable("container.crafting")));
             return InteractionResult.SUCCESS;
         }
         if (stack.is(HandyShulkers.LOOMS)) {
             serverPlayer.openMenu(new SimpleMenuProvider(
-                    (id, inventory, p) -> new LoomMenu(id, inventory,
-                            ContainerLevelAccess.create(serverPlayer.level(), serverPlayer.blockPosition())),
+                    (id, inventory, p) -> new HandLoomMenu(id, inventory,
+                            serverPlayer.level(), serverPlayer.blockPosition()),
                     Component.translatable("container.loom")));
             return InteractionResult.SUCCESS;
         }
         if (stack.is(HandyShulkers.BEDS)) {
-            Either<Player.BedSleepingProblem, net.minecraft.util.Unit> result =
-                    serverPlayer.startSleepInBed(serverPlayer.blockPosition());
-            result.ifLeft(problem -> serverPlayer.displayClientMessage(problem.getMessage(), true));
-            return InteractionResult.SUCCESS;
+            return sleepInPlace(serverPlayer);
         }
         return InteractionResult.PASS;
+    }
+
+    /**
+     * Sleeps right where the player stands. Vanilla startSleepInBed cannot be
+     * used here: it reads the bed's FACING property from the target position
+     * and throws on anything that is not a bed block. So the checks (working
+     * bed dimension, night time, no monsters nearby) are replicated and then
+     * the plain sleep state is entered, which still drives vanilla's
+     * night-skipping.
+     */
+    private static InteractionResult sleepInPlace(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        if (!level.dimensionType().bedWorks()) {
+            sendProblem(player, Player.BedSleepingProblem.NOT_POSSIBLE_HERE);
+            return InteractionResult.SUCCESS;
+        }
+        if (level.isDay()) {
+            sendProblem(player, Player.BedSleepingProblem.NOT_POSSIBLE_NOW);
+            return InteractionResult.SUCCESS;
+        }
+        List<Monster> monsters = level.getEntitiesOfClass(Monster.class,
+                player.getBoundingBox().inflate(8.0D, 5.0D, 8.0D),
+                monster -> monster.isPreventingPlayerRest(player));
+        if (!monsters.isEmpty()) {
+            sendProblem(player, Player.BedSleepingProblem.NOT_SAFE);
+            return InteractionResult.SUCCESS;
+        }
+        player.startSleeping(player.blockPosition());
+        level.updateSleepingPlayerList();
+        return InteractionResult.SUCCESS;
+    }
+
+    private static void sendProblem(ServerPlayer player, Player.BedSleepingProblem problem) {
+        Component message = problem.getMessage();
+        if (message != null) {
+            player.displayClientMessage(message, true);
+        }
     }
 }

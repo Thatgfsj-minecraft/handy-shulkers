@@ -6,6 +6,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
@@ -97,7 +98,16 @@ public class ItemStackContainer implements Container {
 
     @Override
     public boolean stillValid(Player player) {
-        return player.getInventory().contains(box);
+        // Identity match on purpose: Inventory.contains uses component equality,
+        // so an identical second box would keep the menu "valid" and edits would
+        // then write into a different, possibly dropped, stack.
+        Inventory inventory = player.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            if (inventory.getItem(i) == box) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

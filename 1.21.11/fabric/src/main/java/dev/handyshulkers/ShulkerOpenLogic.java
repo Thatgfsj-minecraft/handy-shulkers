@@ -2,6 +2,7 @@ package dev.handyshulkers;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionResult;
@@ -75,10 +76,30 @@ public final class ShulkerOpenLogic {
             return InteractionResult.PASS;
         }
         int rows = rowsFor(stack);
+        // Menus top out at 6 rows (54 slots). A bigger box would silently lose
+        // everything beyond slot 54 on the first write-back, so refuse it.
+        if (config.forceRows < 1 && capacityOverLimit(stack)) {
+            serverPlayer.displayClientMessage(Component.translatable("message.handyshulkers.box_too_large"), true);
+            return InteractionResult.SUCCESS_SERVER;
+        }
         serverPlayer.openMenu(new SimpleMenuProvider(
                 (id, inventory, p) -> new ShulkerMenu(id, inventory, stack, rows),
                 stack.getHoverName()));
         return InteractionResult.SUCCESS_SERVER;
+    }
+
+    private static boolean capacityOverLimit(ItemStack stack) {
+        if (stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof EntityBlock entityBlock) {
+            try {
+                BlockEntity blockEntity = entityBlock.newBlockEntity(BlockPos.ZERO, blockItem.getBlock().defaultBlockState());
+                if (blockEntity instanceof net.minecraft.world.Container container && container.getContainerSize() > 54) {
+                    return true;
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        ItemContainerContents contents = stack.get(DataComponents.CONTAINER);
+        return contents != null && contents.stream().count() > 54;
     }
 
     /**

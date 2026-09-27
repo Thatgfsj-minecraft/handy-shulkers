@@ -2,6 +2,8 @@ package dev.handyshulkers;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,14 +54,27 @@ public final class HandyShulkersConfig {
         HandyShulkersConfig config = new HandyShulkersConfig();
         if (Files.exists(path)) {
             try {
-                config = GSON.fromJson(Files.readString(path), HandyShulkersConfig.class);
+                JsonObject json = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+                // Read field by field instead of GSON.fromJson: Gson allocates
+                // the instance without running constructors, so a key missing
+                // from the file would silently reset a declared default of
+                // true back to false.
+                if (json.has("requireSneak")) {
+                    config.requireSneak = json.get("requireSneak").getAsBoolean();
+                }
+                if (json.has("allowUnknownStorage")) {
+                    config.allowUnknownStorage = json.get("allowUnknownStorage").getAsBoolean();
+                }
+                if (json.has("allowFakePlayers")) {
+                    config.allowFakePlayers = json.get("allowFakePlayers").getAsBoolean();
+                }
+                if (json.has("forceRows")) {
+                    config.forceRows = json.get("forceRows").getAsInt();
+                }
             } catch (Exception e) {
                 System.err.println("[" + HandyShulkers.MOD_ID + "] Failed to read config, using defaults: " + e);
                 config = new HandyShulkersConfig();
             }
-        }
-        if (config == null) {
-            config = new HandyShulkersConfig();
         }
         if (config.forceRows < 1 || config.forceRows > 6) {
             config.forceRows = -1;
