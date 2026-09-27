@@ -2,7 +2,10 @@ package dev.handyshulkers.fabric;
 
 import dev.handyshulkers.HandItemUse;
 import dev.handyshulkers.HandyShulkersConfig;
+import dev.handyshulkers.SelfTest;
+import dev.handyshulkers.TempBedTracker;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.loader.api.FabricLoader;
@@ -19,8 +22,10 @@ public class HandyShulkersFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         HandyShulkersConfig.init(FabricLoader.getInstance().getConfigDir().resolve("handyshulkers.json"));
+        SelfTest.run();
         UseBlockCallback.EVENT.register(HandyShulkersFabric::onUseBlock);
         UseItemCallback.EVENT.register(HandyShulkersFabric::onUseItem);
+        ServerTickEvents.END_SERVER_TICK.register(TempBedTracker::tick);
     }
 
     /**

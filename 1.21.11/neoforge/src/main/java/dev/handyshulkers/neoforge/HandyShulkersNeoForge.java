@@ -3,6 +3,8 @@ package dev.handyshulkers.neoforge;
 import dev.handyshulkers.HandItemUse;
 import dev.handyshulkers.HandyShulkers;
 import dev.handyshulkers.HandyShulkersConfig;
+import dev.handyshulkers.SelfTest;
+import dev.handyshulkers.TempBedTracker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.ItemStack;
@@ -18,7 +20,10 @@ public class HandyShulkersNeoForge {
 
     public HandyShulkersNeoForge() {
         HandyShulkersConfig.init(FMLPaths.CONFIGDIR.get().resolve("handyshulkers.json"));
+        SelfTest.run();
         NeoForge.EVENT_BUS.register(HandyShulkersNeoForge.class);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) ->
+                TempBedTracker.tick(event.getServer()));
     }
 
     /**
