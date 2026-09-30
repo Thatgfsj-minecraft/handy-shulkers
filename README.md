@@ -1,12 +1,12 @@
 # Handy Shulkers
 
-一个"从物品栏直接打开潜影盒"的 Minecraft 模组，是参考 [Advanced Shulkerboxes](https://github.com/henkelmax/advanced-shulkerboxes) 的独立重写版，目标只有一个：**兼容尽量多的其他模组**。
+一个"从物品栏直接打开潜影盒"的 Minecraft 模组，是 [Advanced Shulkerboxes](https://github.com/henkelmax/advanced-shulkerboxes) 的独立重写版，目标只有一个：**兼容尽量多的其他模组**。
 
 灵感与差异：参考了 [Quick Shulker](https://www.curseforge.com/minecraft/mc-mods/quick-shulker) 的交互模型，但**去掉了它"把盒子戴到头上"的机制**——本模组不占用任何装备栏，头盔上有没有东西、放了什么都完全不影响使用。
 
 ## 特性
 
-**核心交互模型（Quick Shulker 式"拿着就用"）：**
+**核心交互模型（Quick Shulker 式"拿着就用"，且完全没有"戴头上"机制，不占任何装备栏）：**
 
 - **右键（不潜行）= 使用手持的功能性物品**：
   - 潜影盒 → 直接打开（无需放置）
@@ -22,7 +22,7 @@
 - 其余一切物品和方块行为不受任何影响（客户端永不吞包，纯服务端逻辑）
 - **启动自检**：服务器每次启动自动验证容器读写回环（日志搜 `SELF-TEST`），数据安全回归无处遁形
 
-**兼容性：**
+**兼容性（本模组的立身之本）：**
 
 - **标签驱动识别**：盒子走 `handyshulkers:shulker_boxes`（内置 17 个原版盒 + 自动纳入 `#c:shulker_boxes`、`#minecraft:shulker_boxes`）；工作台/织布机/床分别走 `crafting_tables`/`looms`/`beds` 标签（均自动纳入对应 `#c:` 通用标签）。**其他模组的物品打了标签即自动支持**，也可用资源包/数据包自行扩展
 - **通用容器界面**：行数按盒子实际容量自动推断（1~6 行），大容量模组盒子也能完整打开
@@ -77,10 +77,6 @@ CI 工作流位于 `ci/build.yml`（构建全部四个项目）。启用方法�
 | 潜影盒套娃 | 靠运行时判断 | 槽位级禁止容器物品放入 |
 | 许可证 | 无 LICENSE（保留所有权利） | GPL-3.0 |
 
-## 许可证 / License
+## 许可证
 
-本项目基于 [GPL-3.0](./LICENSE)（GNU 通用公共许可证第 3 版）开源发布。
-
-- 你可以自由地使用、学习、修改和分发本项目的代码；
-- 基于本项目修改或二次开发的作品，必须同样以 GPL-3.0 协议开源，并保留相应的版权与许可声明；
-- 本项目不提供任何担保，完整条款请参见 [LICENSE](./LICENSE) 文件。
+GPL-3.0

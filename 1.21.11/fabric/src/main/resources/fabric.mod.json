@@ -7,7 +7,7 @@
   "authors": [
     "Thatgfsj"
   ],
-  "license": "MIT",
+  "license": "GPL-3.0",
   "environment": "*",
   "entrypoints": {
     "main": [
