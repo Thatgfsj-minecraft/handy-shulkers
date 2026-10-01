@@ -41,31 +41,30 @@
 
 ## 版本与加载器
 
-| 目录 | Minecraft | 加载器 |
-|---|---|---|
-| `1.21.1/fabric` | 1.21.1 | Fabric |
-| `1.21.1/neoforge` | 1.21.1 | NeoForge (21.1.x) |
-| `1.21.11/fabric` | 1.21.11 | Fabric |
-| `1.21.11/neoforge` | 1.21.11 | NeoForge (21.11.x) |
+支持 **1.21.1 / 1.21.4 / 1.21.5 / 1.21.8 / 1.21.9 / 1.21.10 / 1.21.11 / 26.1 / 26.2 / 26.3** × **Fabric / NeoForge**（20 个构建）：
 
-四个项目互相独立，各自有独立的 Gradle 构建脚本。
+| Minecraft | Fabric | NeoForge | Java | 备注 |
+|---|---|---|---|---|
+| 1.21.1 / 1.21.4 / 1.21.5 / 1.21.8 / 1.21.9 / 1.21.10 / 1.21.11 | ✅ | ✅ | 21 | 1.21.9 的 NeoForge 官方仅有 beta（21.9.16-beta），已实测可用 |
+| 26.1 / 26.2 / 26.3 | ✅ | ✅ | **25** | 26.x 为日期式版本线（去混淆化）；26.3 的 NeoForge 仅有 beta（26.3.0.37-beta），已实测编译通过 |
+
+每个版本目录（`<版本>/<加载器>/`）互相独立，各自有独立的 Gradle 构建脚本。全部 jar 见 [Releases](../../releases)。
 
 ## 构建
 
 每个项目目录下单独执行：
 
 ```bash
-cd 1.21.1/fabric
-./gradlew build
+cd 1.21.11/fabric   # 或任意 <版本>/<加载器> 子目录
+GRADLE_USER_HOME=~/.gradle-handyshulkers ./gradlew build
 # 产物在 build/libs/
 ```
 
-CI 工作流位于 `ci/build.yml`（构建全部四个项目）。启用方法：把它移动到 `.github/workflows/build.yml` 后 push，之后每次 push 会自动构建，产物在 Actions 页面的 Artifacts 中下载。
+> 26.x 子项目需要 JDK 25（Gradle daemon 与编译都在 25 上），Fabric 侧使用 Loom 1.18.2 新插件 id `net.fabricmc.fabric-loom`（无映射行、依赖用 `implementation`）、Gradle ≥9.7。
 
-> 本地构建提示：如果你的机器配置了全局 Gradle 镜像 init 脚本（如阿里云镜像），NeoForge 相关依赖可能解析失败，建议用独立的 GRADLE_USER_HOME 构建：
-> ```bash
-> GRADLE_USER_HOME=~/.gradle-handyshulkers ./gradlew build
-> ```
+CI 工作流位于 `ci/build.yml`。启用方法：把它移动到 `.github/workflows/build.yml` 后 push，之后每次 push 会自动构建，产物在 Actions 页面的 Artifacts 中下载。
+
+> 本地构建提示：如果你的机器配置了全局 Gradle 镜像 init 脚本（如阿里云镜像），NeoForge 相关依赖可能解析失败，务必用独立的 GRADLE_USER_HOME 构建。
 
 ## 与原版 Advanced Shulkerboxes 的差异
 

@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:loom",
+    { "id": "#c:looms", "required": false }
+  ]
+}
