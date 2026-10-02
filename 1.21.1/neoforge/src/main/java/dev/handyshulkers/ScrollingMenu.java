@@ -13,49 +13,55 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Scrolling menu for boxes larger than 54 slots: the 54 window slots are a
- * moving 6-row view over the backing container (offset = scroll row * 9), so
- * every slot of even a 243-slot box stays reachable and nothing can be lost
- * on write-back. Scrolling rides the vanilla container button packet (the
- * lectern page-turn mechanism, button id = target row); the scroll row and
- * the backing capacity are synced data slots.
+ * Scrolling menu for boxes larger than 54 slots, following the Sophisticated
+ * Storage school: the menu permanently exposes every backing slot (slot i ->
+ * backing slot i, never remapped), and scrolling is purely a client-side
+ * viewport move. The client therefore holds the full content (one big sync on
+ * open, then vanilla's per-slot hash diffing), so scrolling is instant, needs
+ * no packets and no server round-trip, shift-click covers the whole container,
+ * and quickcraft can never land on a remapped slot.
  *
- * <p>The client builds the same menu over a dummy 54-slot container — the
- * server computes the window and broadcasts slot contents, so the client
- * never rebuilds and there is no custom networking.
+ * <p>The backing container is always {@link #STORAGE_SLOTS} big — the 256-slot
+ * hard limit of the vanilla container component rounded up to whole rows. The
+ * playable capacity itself (e.g. 243) arrives through a synced data slot;
+ * cells at or beyond it are locked empty slots and stay hidden.
  */
 public class ScrollingMenu extends AbstractContainerMenu {
 
     public static final int VIEW_ROWS = 6;
-    public static final int WINDOW_SLOTS = VIEW_ROWS * 9;
+    /** Every backing slot the menu exposes: 256 (component hard limit) rounded up to whole rows. */
+    public static final int STORAGE_SLOTS = 261;
     public static final int PLAYER_INVENTORY_SLOTS = 27;
     public static final int HOTBAR_SLOTS = 9;
-    /** Total menu slots: 54 window slots + 36 player inventory slots. */
-    public static final int TOTAL_SLOTS = WINDOW_SLOTS + PLAYER_INVENTORY_SLOTS + HOTBAR_SLOTS;
+    /** Total menu slots: storage slots + 36 player inventory slots. */
+    public static final int TOTAL_SLOTS = STORAGE_SLOTS + PLAYER_INVENTORY_SLOTS + HOTBAR_SLOTS;
 
     public static final int WINDOW_X = 8;
     public static final int WINDOW_Y = 18;
     public static final int PLAYER_INV_Y = 140;
     public static final int HOTBAR_Y = 198;
+    private static final int HIDDEN_Y = -1000;
 
     /** Assigned by the loader entry while registering the menu type. */
     public static MenuType<ScrollingMenu> TYPE;
 
     private final Container backing;
     private final ItemStack box;
-    private final int playable;
-    private final DataSlot scrollRow = DataSlot.standalone();
     private final DataSlot capacitySlot = DataSlot.standalone();
+    /** Viewport state. Server side this stays 0 and is never read for logic. */
+    private int scrollRow;
 
     public ScrollingMenu(int id, Inventory playerInventory, Container backing, int capacity, ItemStack box) {
         super(TYPE, id);
         this.backing = backing;
         this.box = box;
-        this.playable = capacity;
         this.capacitySlot.set(capacity);
-        addDataSlot(this.scrollRow);
         addDataSlot(this.capacitySlot);
-        rebuildWindow();
+        for (int i = 0; i < STORAGE_SLOTS; i++) {
+            int row = i / 9;
+            addSlot(new StorageSlot(i, WINDOW_X + (i % 9) * 18,
+                    row < VIEW_ROWS ? WINDOW_Y + row * 18 : HIDDEN_Y));
+        }
         for (int i = 0; i < PLAYER_INVENTORY_SLOTS; i++) {
             addSlot(new Slot(playerInventory, i + 9, WINDOW_X + (i % 9) * 18, PLAYER_INV_Y + (i / 9) * 18));
         }
@@ -65,96 +71,12 @@ public class ScrollingMenu extends AbstractContainerMenu {
     }
 
     /**
-     * Client-side factory: a fixed 54-slot dummy view. Contents arrive through
-     * the normal container sync packets, the scroll row and capacity through
-     * the data slots; neither the slots nor the backing container are used
-     * for anything server-authoritative on this side.
+     * Client-side factory over a dummy container: vanilla slot sync aligns by
+     * index, so the client holds a copy of the entire content after the open
+     * broadcast and never needs to ask the server about scrolling.
      */
     public static ScrollingMenu clientCreate(int id, Inventory playerInventory) {
-        return new ScrollingMenu(id, playerInventory, new SimpleContainer(WINDOW_SLOTS), WINDOW_SLOTS, ItemStack.EMPTY);
-    }
-
-    /**
-     * Visible window over the backing container: slot i shows backing[i + row * 9].
-     * The backing container is padded to whole rows; cells beyond the playable
-     * capacity (e.g. a declared 256-slot box pads to 29 rows) render as locked
-     * empty cells — the container component itself tops out at 256 slots, so
-     * content there could never save.
-     */
-    private void rebuildWindow() {
-        int offset = scrollRow.get() * 9;
-        if (!slots.isEmpty()) {
-            slots.subList(0, WINDOW_SLOTS).clear();
-        }
-        for (int i = 0; i < WINDOW_SLOTS; i++) {
-            slots.add(windowSlot(offset + i, WINDOW_X + (i % 9) * 18, WINDOW_Y + (i / 9) * 18));
-        }
-    }
-
-    private Slot windowSlot(int backingIndex, int x, int y) {
-        return new Slot(backing, backingIndex, x, y) {
-            private boolean playable() {
-                return backingIndex < ScrollingMenu.this.playable;
-            }
-
-            @Override
-            public ItemStack getItem() {
-                return playable() ? super.getItem() : ItemStack.EMPTY;
-            }
-
-            @Override
-            public void set(ItemStack stack) {
-                if (playable()) {
-                    super.set(stack);
-                }
-            }
-
-            @Override
-            public boolean hasItem() {
-                return playable() && super.hasItem();
-            }
-
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return playable() && !ItemStackContainer.isContainerItem(stack);
-            }
-        };
-    }
-
-    /**
-     * Vanilla container button packet (lectern page-turn mechanism):
-     * button 0 = scroll up one row, 1 = scroll down one row, 100 + n = jump
-     * to row n — the same protocol the compressed-blocks scrolling menu
-     * speaks. On the client this only moves the data slot for instant
-     * scroll-bar feedback; on the server it re-points the window slots and
-     * the changed contents are broadcast through the normal sync path.
-     */
-    @Override
-    public boolean clickMenuButton(Player player, int button) {
-        int target;
-        if (button == 0) {
-            target = scrollRow.get() - 1;
-        } else if (button == 1) {
-            target = scrollRow.get() + 1;
-        } else if (button >= 100) {
-            target = button - 100;
-        } else {
-            return false;
-        }
-        target = Mth.clamp(target, 0, getMaxRow());
-        if (target == scrollRow.get()) {
-            return false;
-        }
-        scrollRow.set(target);
-        if (!player.level().isClientSide()) {
-            rebuildWindow();
-            broadcastFullState();
-        }
-        return true;
-    }
-
-    public int getScrollRow() {
-        return scrollRow.get();
+        return new ScrollingMenu(id, playerInventory, new SimpleContainer(STORAGE_SLOTS), 0, ItemStack.EMPTY);
     }
 
     /** Backing capacity in slots; synced to the client for the scroll bar. */
@@ -162,19 +84,84 @@ public class ScrollingMenu extends AbstractContainerMenu {
         return capacitySlot.get();
     }
 
+    public int getScrollRow() {
+        return scrollRow;
+    }
+
     public int getMaxRow() {
         return Math.max(0, (getCapacity() + 8) / 9 - VIEW_ROWS);
+    }
+
+    /**
+     * Client-only viewport move (called by the screen; the server never learns
+     * about scrolling). Repositions the storage slots: rows inside the window
+     * move into the 6-row grid, everything else parks far off-panel. The slot
+     * objects are replaced, not mutated — Slot coordinates are final — and the
+     * fresh instances read the same local content, so nothing flickers.
+     */
+    public void setScrollRowLocal(int newRow) {
+        int target = Mth.clamp(newRow, 0, getMaxRow());
+        if (target == scrollRow) {
+            return;
+        }
+        scrollRow = target;
+        for (int i = 0; i < STORAGE_SLOTS; i++) {
+            int row = i / 9;
+            int y = row >= scrollRow && row < scrollRow + VIEW_ROWS
+                    ? WINDOW_Y + (row - scrollRow) * 18
+                    : HIDDEN_Y;
+            slots.set(i, new StorageSlot(i, WINDOW_X + (i % 9) * 18, y));
+        }
+    }
+
+    /**
+     * A storage cell: invisible (and unclickable, per vanilla isActive checks)
+     * outside the viewport rows, and permanently locked at or beyond the
+     * playable capacity — the container component cannot save anything past
+     * its 256-slot limit.
+     */
+    private class StorageSlot extends Slot {
+
+        private final int storageIndex;
+
+        private StorageSlot(int storageIndex, int x, int y) {
+            super(backing, storageIndex, x, y);
+            this.storageIndex = storageIndex;
+        }
+
+        private boolean inView() {
+            int row = storageIndex / 9;
+            return row >= scrollRow && row < scrollRow + VIEW_ROWS;
+        }
+
+        private boolean playable() {
+            return storageIndex < getCapacity();
+        }
+
+        @Override
+        public boolean isActive() {
+            return inView() && playable();
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return playable() && !ItemStackContainer.isContainerItem(stack);
+        }
     }
 
     @Override
     public void clicked(int slotIndex, int button, ClickType clickType, Player player) {
         // the opened box itself can never be moved into its own inventory
-        if (slotIndex >= 0 && slotIndex < WINDOW_SLOTS && !box.isEmpty() && slots.get(slotIndex).getItem() == box) {
+        if (slotIndex >= 0 && slotIndex < STORAGE_SLOTS && !box.isEmpty() && slots.get(slotIndex).getItem() == box) {
             return;
         }
         super.clicked(slotIndex, button, clickType, player);
     }
 
+    /**
+     * Standard two-segment shift-click across the WHOLE container (including
+     * currently hidden rows), matching every mainstream large-container mod.
+     */
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         Slot slot = this.slots.get(index);
@@ -183,11 +170,11 @@ public class ScrollingMenu extends AbstractContainerMenu {
         }
         ItemStack current = slot.getItem();
         ItemStack original = current.copy();
-        if (index < WINDOW_SLOTS) {
-            if (!this.moveItemStackTo(current, WINDOW_SLOTS, TOTAL_SLOTS, true)) {
+        if (index < STORAGE_SLOTS) {
+            if (!this.moveItemStackTo(current, STORAGE_SLOTS, TOTAL_SLOTS, true)) {
                 return ItemStack.EMPTY;
             }
-        } else if (!this.moveItemStackTo(current, 0, WINDOW_SLOTS, false)) {
+        } else if (!this.moveItemStackTo(current, 0, STORAGE_SLOTS, false)) {
             return ItemStack.EMPTY;
         }
         if (current.isEmpty()) {

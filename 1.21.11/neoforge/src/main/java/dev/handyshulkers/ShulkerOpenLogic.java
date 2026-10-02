@@ -81,7 +81,7 @@ public final class ShulkerOpenLogic {
                 // all slots stay reachable, so nothing can be lost on write-back.
                 serverPlayer.openMenu(new SimpleMenuProvider(
                         (id, inventory, p) -> new ScrollingMenu(id, inventory,
-                                new ItemStackContainer(stack, (capacity + 8) / 9 * 9), capacity, stack),
+                                new ItemStackContainer(stack, ScrollingMenu.STORAGE_SLOTS), capacity, stack),
                         stack.getHoverName()));
                 return InteractionResult.SUCCESS_SERVER;
             }
