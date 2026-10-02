@@ -30,6 +30,15 @@ public final class HandyShulkersConfig {
     public boolean allowFakePlayers = false;
     /** Force the menu row count (1-6). -1 detects it from the item. */
     public int forceRows = -1;
+    /**
+     * Item id -&gt; backing capacity in slots for boxes larger than the 6-row
+     * menus. Listed boxes open in the scrolling UI even while their container
+     * component is still empty, because an empty component carries no capacity
+     * information. Shipped with the compressed shulker box of the
+     * compressed-blocks mod; edit freely.
+     */
+    public java.util.Map<String, Integer> largeBoxes = new java.util.LinkedHashMap<>(
+            java.util.Map.of("compressedblocks:compressed_shulker_box", 243));
 
     private static HandyShulkersConfig instance;
 
@@ -70,6 +79,17 @@ public final class HandyShulkersConfig {
                 }
                 if (json.has("forceRows")) {
                     config.forceRows = json.get("forceRows").getAsInt();
+                }
+                if (json.has("largeBoxes") && json.get("largeBoxes").isJsonObject()) {
+                    config.largeBoxes.clear();
+                    for (java.util.Map.Entry<String, com.google.gson.JsonElement> entry
+                            : json.getAsJsonObject("largeBoxes").entrySet()) {
+                        try {
+                            config.largeBoxes.put(entry.getKey(), entry.getValue().getAsInt());
+                        } catch (Exception ignored) {
+                            // a malformed capacity line must not kill the whole config
+                        }
+                    }
                 }
             } catch (Exception e) {
                 System.err.println("[" + HandyShulkers.MOD_ID + "] Failed to read config, using defaults: " + e);

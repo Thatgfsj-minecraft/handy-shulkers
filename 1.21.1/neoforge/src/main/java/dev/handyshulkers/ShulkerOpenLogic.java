@@ -2,7 +2,6 @@ package dev.handyshulkers;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionResult;
@@ -75,31 +74,55 @@ public final class ShulkerOpenLogic {
         if (!config.allowUnknownStorage && !hasKnownStorage(stack)) {
             return InteractionResult.PASS;
         }
-        int rows = rowsFor(stack);
-        // Menus top out at 6 rows (54 slots). A bigger box would silently lose
-        // everything beyond slot 54 on the first write-back, so refuse it.
-        if (config.forceRows < 1 && capacityOverLimit(stack)) {
-            serverPlayer.displayClientMessage(Component.translatable("message.handyshulkers.box_too_large"), true);
-            return InteractionResult.SUCCESS;
+        if (config.forceRows < 1) {
+            int capacity = largeBoxCapacity(stack, config);
+            if (capacity > 0) {
+                // Boxes bigger than the 6-row menus open in the scrolling UI:
+                // all slots stay reachable, so nothing can be lost on write-back.
+                serverPlayer.openMenu(new SimpleMenuProvider(
+                        (id, inventory, p) -> new ScrollingMenu(id, inventory,
+                                new ItemStackContainer(stack, (capacity + 8) / 9 * 9), capacity, stack),
+                        stack.getHoverName()));
+                return InteractionResult.SUCCESS;
+            }
         }
+        int rows = rowsFor(stack);
         serverPlayer.openMenu(new SimpleMenuProvider(
                 (id, inventory, p) -> new ShulkerMenu(id, inventory, stack, rows),
                 stack.getHoverName()));
         return InteractionResult.SUCCESS;
     }
 
-    private static boolean capacityOverLimit(ItemStack stack) {
+    /**
+     * Backing slot count for boxes that exceed the 6-row menus, or 0 when the
+     * normal sized menus apply. Boxes listed in the config open with their
+     * declared capacity even while empty — an empty container component
+     * carries no capacity information of its own.
+     */
+    private static int largeBoxCapacity(ItemStack stack, HandyShulkersConfig config) {
+        Integer declared = config.largeBoxes.get(
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        if (declared != null && declared > 54) {
+            return declared;
+        }
+        // A block entity knows its own size (e.g. compressed-blocks' 243-slot
+        // scrolling container). Component-only boxes fall back to their
+        // content footprint, rounded up to whole 9-slot rows.
         if (stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof EntityBlock entityBlock) {
             try {
                 BlockEntity blockEntity = entityBlock.newBlockEntity(BlockPos.ZERO, blockItem.getBlock().defaultBlockState());
                 if (blockEntity instanceof net.minecraft.world.Container container && container.getContainerSize() > 54) {
-                    return true;
+                    return container.getContainerSize();
                 }
             } catch (Throwable ignored) {
             }
         }
         ItemContainerContents contents = stack.get(DataComponents.CONTAINER);
-        return contents != null && contents.stream().count() > 54;
+        if (contents != null && contents.stream().count() > 54) {
+            // footprint rounded up to whole rows, so every visible cell stays usable
+            return ((int) contents.stream().count() + 8) / 9 * 9;
+        }
+        return 0;
     }
 
     /**
