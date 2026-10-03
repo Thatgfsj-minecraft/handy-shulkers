@@ -39,7 +39,7 @@
 | `allowUnknownStorage` | `true` | 允许打开存储格式未知的模组盒子（关闭后更保守、绝不误写数据） |
 | `allowFakePlayers` | `false` | 允许自动化假玩家触发使用 |
 | `forceRows` | `-1` | 强制盒子界面行数（1-6），`-1` 为自动检测 |
-| `largeBoxes` | `{"compressedblocks:compressed_shulker_box": 243}` | 物品 id → 声明容量（格）。空盒子的组件里没有容量信息，列入此表的盒子即使为空也直接打开滚动界面；容量同样可来自方块实体真实尺寸或组件内容分布 |
+| `largeBoxes` | `{"compressedblocks:compressed_shulker_box": 243}` | 物品 id → 声明容量（格）。列入此表的物品**无需加入任何标签**即可手持打开，且即使为空也直接进滚动界面（空盒子的组件里没有容量信息）；容量同样可来自方块实体真实尺寸或组件内容分布 |
 
 ## 版本与加载器
 
