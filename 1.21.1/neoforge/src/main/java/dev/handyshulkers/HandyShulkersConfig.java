@@ -68,17 +68,32 @@ public final class HandyShulkersConfig {
                 // the instance without running constructors, so a key missing
                 // from the file would silently reset a declared default of
                 // true back to false.
+                // Each field gets its own guard: one malformed value keeps its
+                // default instead of wiping every user customization on the
+                // following save.
                 if (json.has("requireSneak")) {
-                    config.requireSneak = json.get("requireSneak").getAsBoolean();
+                    try {
+                        config.requireSneak = json.get("requireSneak").getAsBoolean();
+                    } catch (Exception ignored) {
+                    }
                 }
                 if (json.has("allowUnknownStorage")) {
-                    config.allowUnknownStorage = json.get("allowUnknownStorage").getAsBoolean();
+                    try {
+                        config.allowUnknownStorage = json.get("allowUnknownStorage").getAsBoolean();
+                    } catch (Exception ignored) {
+                    }
                 }
                 if (json.has("allowFakePlayers")) {
-                    config.allowFakePlayers = json.get("allowFakePlayers").getAsBoolean();
+                    try {
+                        config.allowFakePlayers = json.get("allowFakePlayers").getAsBoolean();
+                    } catch (Exception ignored) {
+                    }
                 }
                 if (json.has("forceRows")) {
-                    config.forceRows = json.get("forceRows").getAsInt();
+                    try {
+                        config.forceRows = json.get("forceRows").getAsInt();
+                    } catch (Exception ignored) {
+                    }
                 }
                 if (json.has("largeBoxes") && json.get("largeBoxes").isJsonObject()) {
                     config.largeBoxes.clear();

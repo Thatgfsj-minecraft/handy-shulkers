@@ -37,9 +37,9 @@ public class ScrollingMenu extends AbstractContainerMenu {
     public static final int TOTAL_SLOTS = STORAGE_SLOTS + PLAYER_INVENTORY_SLOTS + HOTBAR_SLOTS;
 
     public static final int WINDOW_X = 8;
-    public static final int WINDOW_Y = 17;
-    public static final int PLAYER_INV_Y = 140;
-    public static final int HOTBAR_Y = 198;
+    public static final int WINDOW_Y = 18;
+    public static final int PLAYER_INV_Y = 139;
+    public static final int HOTBAR_Y = 197;
     private static final int HIDDEN_Y = -1000;
 
     /** Assigned by the loader entry while registering the menu type. */
@@ -127,6 +127,10 @@ public class ScrollingMenu extends AbstractContainerMenu {
         private StorageSlot(int storageIndex, int x, int y) {
             super(backing, storageIndex, x, y);
             this.storageIndex = storageIndex;
+            // Slot.index is assigned by addSlot for the instances it tracks;
+            // the viewport relayout swaps instances in place and MUST restore
+            // it, or every client click after scrolling reports slot 0.
+            this.index = storageIndex;
         }
 
         private boolean inView() {

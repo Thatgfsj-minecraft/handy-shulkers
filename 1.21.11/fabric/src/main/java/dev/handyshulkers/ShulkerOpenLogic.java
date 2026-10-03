@@ -74,17 +74,18 @@ public final class ShulkerOpenLogic {
         if (!config.allowUnknownStorage && !hasKnownStorage(stack)) {
             return InteractionResult.PASS;
         }
-        if (config.forceRows < 1) {
-            int capacity = largeBoxCapacity(stack, config);
-            if (capacity > 0) {
-                // Boxes bigger than the 6-row menus open in the scrolling UI:
-                // all slots stay reachable, so nothing can be lost on write-back.
-                serverPlayer.openMenu(new SimpleMenuProvider(
-                        (id, inventory, p) -> new ScrollingMenu(id, inventory,
-                                new ItemStackContainer(stack, ScrollingMenu.STORAGE_SLOTS), capacity, stack),
-                        stack.getHoverName()));
-                return InteractionResult.SUCCESS_SERVER;
-            }
+        // Boxes bigger than the 6-row menus ALWAYS open in the scrolling UI,
+        // even with forceRows set: a rows*9 container would truncate (or crash
+        // on) content stored beyond its slots. forceRows only governs the
+        // normal-sized menus below.
+        int capacity = largeBoxCapacity(stack, config);
+        if (capacity > 0) {
+            ItemStackContainer container = new ItemStackContainer(stack, ScrollingMenu.STORAGE_SLOTS);
+            container.startOpen(serverPlayer);
+            serverPlayer.openMenu(new SimpleMenuProvider(
+                    (id, inventory, p) -> new ScrollingMenu(id, inventory, container, capacity, stack),
+                    stack.getHoverName()));
+            return InteractionResult.SUCCESS_SERVER;
         }
         int rows = rowsFor(stack);
         serverPlayer.openMenu(new SimpleMenuProvider(
@@ -103,7 +104,7 @@ public final class ShulkerOpenLogic {
         Integer declared = config.largeBoxes.get(
                 net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
         if (declared != null && declared > 54) {
-            return declared;
+            return Math.min(declared, 256);
         }
         // A block entity knows its own size (e.g. compressed-blocks' 243-slot
         // scrolling container). Component-only boxes fall back to their
@@ -112,7 +113,7 @@ public final class ShulkerOpenLogic {
             try {
                 BlockEntity blockEntity = entityBlock.newBlockEntity(BlockPos.ZERO, blockItem.getBlock().defaultBlockState());
                 if (blockEntity instanceof net.minecraft.world.Container container && container.getContainerSize() > 54) {
-                    return container.getContainerSize();
+                    return Math.min(container.getContainerSize(), 256);
                 }
             } catch (Throwable ignored) {
             }
@@ -120,7 +121,7 @@ public final class ShulkerOpenLogic {
         ItemContainerContents contents = stack.get(DataComponents.CONTAINER);
         if (contents != null && contents.stream().count() > 54) {
             // footprint rounded up to whole rows, so every visible cell stays usable
-            return ((int) contents.stream().count() + 8) / 9 * 9;
+            return Math.min(((int) contents.stream().count() + 8) / 9 * 9, 256);
         }
         return 0;
     }

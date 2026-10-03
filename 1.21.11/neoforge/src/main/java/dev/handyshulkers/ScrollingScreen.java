@@ -95,6 +95,9 @@ public class ScrollingScreen extends AbstractContainerScreen<ScrollingMenu> {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() != 0) {
+            return super.mouseClicked(event, doubled);
+        }
         double mouseX = event.x(), mouseY = event.y();
         int tx = this.leftPos + TRACK_X, ty = this.topPos + TRACK_Y;
         if (mouseX >= tx && mouseX < tx + TRACK_W && mouseY >= ty && mouseY < ty + TRACK_H) {
