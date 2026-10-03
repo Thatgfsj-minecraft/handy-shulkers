@@ -37,7 +37,7 @@ public class ScrollingMenu extends AbstractContainerMenu {
     public static final int TOTAL_SLOTS = STORAGE_SLOTS + PLAYER_INVENTORY_SLOTS + HOTBAR_SLOTS;
 
     public static final int WINDOW_X = 8;
-    public static final int WINDOW_Y = 18;
+    public static final int WINDOW_Y = 17;
     public static final int PLAYER_INV_Y = 140;
     public static final int HOTBAR_Y = 198;
     private static final int HIDDEN_Y = -1000;

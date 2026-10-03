@@ -3,81 +3,108 @@ package dev.handyshulkers;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
- * Six-row window over a large box. Scrolling is a purely local viewport move
- * (the menu already holds the whole content), so the wheel and the scroll bar
- * never send a packet: the wheel steps one row per notch, clicking the track
- * jumps, and dragging the slider follows continuously with a grab offset.
+ * Six-row window over a large box, visually identical to the vanilla 6-row
+ * chest: the background is the vanilla generic_54 texture (same two-segment
+ * blit as the vanilla container screen) and the scroll bar reuses the vanilla
+ * creative-tab scroller sprites. Scrolling is a purely local viewport move —
+ * wheel steps one row, clicking the track pages a whole window, dragging the
+ * thumb follows continuously; no packet is ever sent.
  */
 public class ScrollingScreen extends AbstractContainerScreen<ScrollingMenu> {
 
-    public static final int TEXTURE_WIDTH = 186;
-    public static final int TEXTURE_HEIGHT = 240;
-    private static final Identifier TEXTURE =
-            Identifier.fromNamespaceAndPath(HandyShulkers.MOD_ID, "textures/gui/scrolling_container.png");
+    /** Vanilla 6-row chest background (generic_54: v0..rows*18+17 top band, v126.. backpack area). */
+    private static final Identifier BACKGROUND =
+            Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
+    /** Vanilla creative scroll bar (12×15 thumb) and list track background. */
+    private static final Identifier SCROLLER = Identifier.withDefaultNamespace("container/creative_inventory/scroller");
+    private static final Identifier SCROLLER_BG = Identifier.withDefaultNamespace("widget/scroller_background");
+    private static final int PANEL_W = 176;
+    /** Vanilla panel gray (198,198,198). */
+    private static final int VANILLA_GRAY = 0xFFC6C6C6;
+    private static final int TRACK_X = 178, TRACK_Y = ScrollingMenu.WINDOW_Y, TRACK_W = 12, TRACK_H = 106;
+    private static final int THUMB_H = 15;
 
-    private static final int TRACK_X = 171;
-    private static final int TRACK_Y = ScrollingMenu.WINDOW_Y;
-    private static final int TRACK_WIDTH = 9;
-    private static final int TRACK_HEIGHT = ScrollingMenu.VIEW_ROWS * 18;
-    private static final int SLIDER_HEIGHT = 16;
-    private static final int SLIDER_U = 0;
-    private static final int SLIDER_V = 224;
-
-    /** Rows between the grab point and the slider top while dragging; -1 = not dragging. */
-    private int dragGrabOffset = -1;
+    /** Mouse-y minus thumb top while dragging the slider; -1 = not dragging. */
+    private double dragOffset = -1;
 
     public ScrollingScreen(ScrollingMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageWidth = 186;
-        this.imageHeight = 224;
-        this.titleLabelX = 8;
-        this.titleLabelY = 7;
-        this.inventoryLabelX = 8;
-        this.inventoryLabelY = 129;
+        this.imageWidth = 194;
+        this.imageHeight = 222;
+        this.inventoryLabelY = 128;
     }
 
     @Override
-    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
-        guiGraphics.blit(TEXTURE, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight,
-                TEXTURE_WIDTH, TEXTURE_HEIGHT);
-        guiGraphics.blit(TEXTURE, this.leftPos + TRACK_X, this.topPos + sliderY(),
-                SLIDER_U, SLIDER_V, TRACK_WIDTH, SLIDER_HEIGHT, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+    public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
+        super.render(gfx, mouseX, mouseY, partialTick);
+        this.renderTooltip(gfx, mouseX, mouseY);
     }
 
-    private int sliderY() {
+    @Override
+    protected void renderBg(GuiGraphics gfx, float partialTick, int mouseX, int mouseY) {
+        // vanilla two-segment container background (6-row window + backpack area)
+        gfx.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND,
+                this.leftPos, this.topPos, 0.0F, 0.0F, PANEL_W,
+                ScrollingMenu.VIEW_ROWS * 18 + 17, 256, 256);
+        gfx.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND,
+                this.leftPos, this.topPos + ScrollingMenu.VIEW_ROWS * 18 + 17,
+                0.0F, 126.0F, PANEL_W, 96, 256, 256);
+        // right panel: vanilla gray extension with black outline (top/right/bottom)
+        int rx = this.leftPos + PANEL_W;
+        gfx.fill(rx, this.topPos, rx + 17, this.topPos + 1, 0xFF000000);
+        gfx.fill(rx, this.topPos + 1, rx + 17, this.topPos + 221, VANILLA_GRAY);
+        gfx.fill(rx + 16, this.topPos, rx + 17, this.topPos + 222, 0xFF000000);
+        gfx.fill(rx, this.topPos + 221, rx + 17, this.topPos + 222, 0xFF000000);
+        // scroll bar: vanilla sprites, thumb follows the local viewport
+        gfx.blitSprite(RenderPipelines.GUI_TEXTURED, SCROLLER_BG,
+                this.leftPos + TRACK_X, this.topPos + TRACK_Y, TRACK_W, TRACK_H);
+        gfx.blitSprite(RenderPipelines.GUI_TEXTURED, SCROLLER,
+                this.leftPos + TRACK_X, this.thumbTop(), TRACK_W, THUMB_H);
+    }
+
+    private int thumbTop() {
         int maxRow = this.menu.getMaxRow();
         if (maxRow <= 0) {
-            return TRACK_Y;
+            return this.topPos + TRACK_Y;
         }
-        return TRACK_Y + (TRACK_HEIGHT - SLIDER_HEIGHT) * this.menu.getScrollRow() / maxRow;
+        return this.topPos + TRACK_Y
+                + this.menu.getScrollRow() * (TRACK_H - THUMB_H) / maxRow;
+    }
+
+    /** Mouse y -> viewport first row. */
+    private int rowAt(double mouseY) {
+        int maxRow = this.menu.getMaxRow();
+        if (maxRow <= 0) {
+            return 0;
+        }
+        return Math.round((float) (mouseY - (this.topPos + TRACK_Y) - THUMB_H / 2.0)
+                / (TRACK_H - THUMB_H) * maxRow);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (scrollY != 0) {
-            int notches = (int) Math.signum(scrollY) * Math.max(1, (int) Math.ceil(Math.abs(scrollY)));
-            this.menu.setScrollRowLocal(this.menu.getScrollRow() + notches);
-            return true;
-        }
-        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        this.menu.setScrollRowLocal(this.menu.getScrollRow() + (scrollY > 0 ? -1 : 1));
+        return true;
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
-        if (event.button() == 0
-                && event.x() >= this.leftPos + TRACK_X && event.x() < this.leftPos + TRACK_X + TRACK_WIDTH
-                && event.y() >= this.topPos + TRACK_Y && event.y() < this.topPos + TRACK_Y + TRACK_HEIGHT) {
-            int rowUnder = rowFromY(event.y());
-            int sliderY = sliderY();
-            boolean onSlider = event.y() >= this.topPos + sliderY && event.y() < this.topPos + sliderY + SLIDER_HEIGHT;
-            this.dragGrabOffset = onSlider ? rowUnder - this.menu.getScrollRow() : 0;
-            this.menu.setScrollRowLocal(rowUnder - this.dragGrabOffset);
+        double mouseX = event.x(), mouseY = event.y();
+        int tx = this.leftPos + TRACK_X, ty = this.topPos + TRACK_Y;
+        if (mouseX >= tx && mouseX < tx + TRACK_W && mouseY >= ty && mouseY < ty + TRACK_H) {
+            int thumb = this.thumbTop();
+            if (mouseY < thumb || mouseY >= thumb + THUMB_H) {
+                // track click off the thumb: page the whole window up/down
+                this.menu.setScrollRowLocal(this.menu.getScrollRow()
+                        + (mouseY < thumb ? -ScrollingMenu.VIEW_ROWS : ScrollingMenu.VIEW_ROWS));
+            }
+            this.dragOffset = mouseY - this.thumbTop();
             return true;
         }
         return super.mouseClicked(event, doubled);
@@ -85,8 +112,8 @@ public class ScrollingScreen extends AbstractContainerScreen<ScrollingMenu> {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-        if (this.dragGrabOffset >= 0) {
-            this.menu.setScrollRowLocal(rowFromY(event.y()) - this.dragGrabOffset);
+        if (this.dragOffset >= 0) {
+            this.menu.setScrollRowLocal(this.rowAt(event.y() - this.dragOffset));
             return true;
         }
         return super.mouseDragged(event, dragX, dragY);
@@ -94,16 +121,7 @@ public class ScrollingScreen extends AbstractContainerScreen<ScrollingMenu> {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        this.dragGrabOffset = -1;
+        this.dragOffset = -1;
         return super.mouseReleased(event);
-    }
-
-    private int rowFromY(double mouseY) {
-        int maxRow = this.menu.getMaxRow();
-        if (maxRow <= 0) {
-            return 0;
-        }
-        double t = (mouseY - this.topPos - TRACK_Y - SLIDER_HEIGHT / 2.0) / (TRACK_HEIGHT - SLIDER_HEIGHT);
-        return Mth.clamp((int) Math.round(t * maxRow), 0, maxRow);
     }
 }
