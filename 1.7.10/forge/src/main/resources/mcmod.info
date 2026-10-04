@@ -1,0 +1,16 @@
+[
+{
+  "modid": "handyshulkers",
+  "name": "Handy Shulkers",
+  "description": "Hand-use for functional items: right click opens whitelisted storage-box items, a held bed sleeps where you stand, held crafting table / enchanting table / anvil show their screen and the ender chest opens. Sneak + right click stays vanilla.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Thatgfsj"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": ["Forge"]
+}
+]

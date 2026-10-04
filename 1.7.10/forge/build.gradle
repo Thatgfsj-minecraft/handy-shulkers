@@ -1,0 +1,52 @@
+// Handy Shulkers — Minecraft 1.7.10 x Forge
+//
+// 路线说明：官方 ForgeGradle 1.2（net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT）
+// 仍发布在 forge maven，但它从已停用的 s3.amazonaws.com/Minecraft.Download 桶拉取
+// 原版 client/server jar（现为 404），全新环境无法完成 setup。这里改用社区维护的
+// anatawa12 fork（mavenCentral 可达），它把原版产物端点切到 launchermeta/piston，
+// 并支持较新的 Gradle。Forge 本体仍用官方 10.13.4.1614（1.7.10 末期版本，
+// 其 userdev 产物经实测仍在 maven.minecraftforge.net 上发布）。
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "forge"
+            url = "https://maven.minecraftforge.net"
+        }
+    }
+    dependencies {
+        classpath 'com.anatawa12.forge:ForgeGradle:1.2-1.1.1'
+    }
+}
+
+apply plugin: 'forge'
+
+version = '1.4.1'
+group = 'dev.handyshulkers'
+archivesBaseName = 'handyshulkers'
+
+minecraft {
+    version = '1.7.10-10.13.4.1614-1.7.10'
+    runDir = 'run'
+}
+
+// 1.7.10 时代惯例：Java 6 字节码（避免 invokedynamic / 默认方法等新语法）
+sourceCompatibility = '1.6'
+targetCompatibility = '1.6'
+
+compileJava {
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', project.minecraft.version
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version, 'mcversion': project.minecraft.version
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
