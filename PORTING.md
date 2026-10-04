@@ -12,7 +12,7 @@
 | versions/1.21.9 | 1.21.9 × Fabric + NeoForge | snapshot | 快照自主 main；1.21.9 NeoForge 官方仅 beta（21.9.16-beta） |
 | versions/1.21.10 | 1.21.10 × Fabric + NeoForge | snapshot | 快照自主 main，构建未验证 |
 | versions/26.1 | 26.1 × Fabric + NeoForge | 进行中 | 已有代码但从未构建；JDK 25 + fabric-loom 新插件 id `net.fabricmc.fabric-loom` |
-| versions/26.2 | 26.2 × Fabric + NeoForge | 进行中 | 同上 |
+| versions/26.2 | 26.2 × Fabric + NeoForge | 可构建 | 2026-10-05 双子项目 BUILD SUCCESSFUL @ f860522，分支代码零改动即通过（fabric/neoforge jar 各 1 枚）；注意：Loom 1.18.2 需 Gradle daemon JVM ≥25 |
 | versions/26.3 | 26.3 × Fabric + NeoForge | snapshot | 已有代码但从未构建；排队等待修复（26.3 NeoForge 仅 26.3.0.37-beta） |
 | versions/1.16.5（待建） | 1.16.5 × Forge | snapshot | 计划：新建分支 + `1.16.5/forge` 子项目，从 1.21.x 语义重写 |
 | versions/1.12.2（待建） | 1.12.2 × Forge | snapshot | 候选 |
