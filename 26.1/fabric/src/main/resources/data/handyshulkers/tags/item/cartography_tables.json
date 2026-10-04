@@ -1,7 +1,0 @@
-{
-  "replace": false,
-  "values": [
-    "minecraft:cartography_table",
-    { "id": "#c:cartography_tables", "required": false }
-  ]
-}

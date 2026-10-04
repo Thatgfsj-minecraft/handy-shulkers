@@ -1,7 +1,0 @@
-{
-  "replace": false,
-  "values": [
-    "minecraft:ender_chest",
-    { "id": "#c:ender_chests", "required": false }
-  ]
-}

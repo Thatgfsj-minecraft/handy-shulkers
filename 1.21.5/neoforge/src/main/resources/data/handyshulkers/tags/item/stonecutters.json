@@ -1,7 +1,0 @@
-{
-  "replace": false,
-  "values": [
-    "minecraft:stonecutter",
-    { "id": "#c:stonecutters", "required": false }
-  ]
-}

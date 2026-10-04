@@ -43,12 +43,13 @@
 
 ## 版本与加载器
 
-支持 **1.21.1 / 1.21.4 / 1.21.5 / 1.21.8 / 1.21.9 / 1.21.10 / 1.21.11 / 26.1 / 26.2 / 26.3** × **Fabric / NeoForge**（20 个构建）：
+仓库采用 **`main` 主分支 + 多版本分支** 结构：`main` 只保留 4 个核心 CI 子项目（**1.21.1 × Fabric / NeoForge、1.21.11 × Fabric / NeoForge**，Java 21）；其余版本各自在 `versions/*` 分支维护，移植与构建状态见 [PORTING.md](PORTING.md)：
 
-| Minecraft | Fabric | NeoForge | Java | 备注 |
-|---|---|---|---|---|
-| 1.21.1 / 1.21.4 / 1.21.5 / 1.21.8 / 1.21.9 / 1.21.10 / 1.21.11 | ✅ | ✅ | 21 | 1.21.9 的 NeoForge 官方仅有 beta（21.9.16-beta），已实测可用 |
-| 26.1 / 26.2 / 26.3 | ✅ | ✅ | **25** | 26.x 为日期式版本线（去混淆化）；26.3 的 NeoForge 仅有 beta（26.3.0.37-beta），已实测编译通过 |
+| 位置 | Minecraft | Fabric | NeoForge | Java | 备注 |
+|---|---|---|---|---|---|
+| `main` | 1.21.1 / 1.21.11 | ✅ | ✅ | 21 | CI 矩阵仅含这 4 个子项目 |
+| `versions/1.21.4` ~ `versions/1.21.10` | 1.21.4 / 1.21.5 / 1.21.8 / 1.21.9 / 1.21.10 | ✅ | ✅ | 21 | 快照分支；1.21.9 的 NeoForge 官方仅有 beta（21.9.16-beta） |
+| `versions/26.1` ~ `versions/26.3` | 26.1 / 26.2 / 26.3 | ✅ | ✅ | **25** | 26.x 为日期式版本线（去混淆化）；Fabric 侧用 Loom 新插件 id `net.fabricmc.fabric-loom`；26.3 的 NeoForge 仅有 beta（26.3.0.37-beta） |
 
 每个版本目录（`<版本>/<加载器>/`）互相独立，各自有独立的 Gradle 构建脚本。全部 jar 见 [Releases](../../releases)。
 
@@ -57,12 +58,13 @@
 每个项目目录下单独执行：
 
 ```bash
-cd 1.21.11/fabric   # 或任意 <版本>/<加载器> 子目录
+git checkout 1.21.11          # 或任意 versions/* 版本分支
+cd 1.21.11/fabric             # 或任意 <版本>/<加载器> 子目录
 GRADLE_USER_HOME=~/.gradle-handyshulkers ./gradlew build
 # 产物在 build/libs/
 ```
 
-> 26.x 子项目需要 JDK 25（Gradle daemon 与编译都在 25 上），Fabric 侧使用 Loom 1.18.2 新插件 id `net.fabricmc.fabric-loom`（无映射行、依赖用 `implementation`）、Gradle ≥9.7。
+> 26.x 子项目（在 `versions/26.x` 分支上）需要 JDK 25（Gradle daemon 与编译都在 25 上），Fabric 侧使用 Loom 1.18.2 新插件 id `net.fabricmc.fabric-loom`（无映射行、依赖用 `implementation`）、Gradle ≥9.7。
 
 CI 工作流位于 `ci/build.yml`。启用方法：把它移动到 `.github/workflows/build.yml` 后 push，之后每次 push 会自动构建，产物在 Actions 页面的 Artifacts 中下载。
 

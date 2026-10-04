@@ -1,7 +1,0 @@
-{
-  "replace": false,
-  "values": [
-    "minecraft:grindstone",
-    { "id": "#c:grindstones", "required": false }
-  ]
-}
