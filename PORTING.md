@@ -16,4 +16,5 @@
 | versions/26.3 | 26.3 × Fabric + NeoForge | 可构建 | 2026-10-05 fabric 零改动即过、neoforge 首次 NeoForm 反编译后通过 @ f860522；26.3.0.37-beta 实测可解析。注：C 盘近满，隔离缓存已迁 `O:\clawwork\.gradle-handyshulkers`，后续构建一律用它 |
 | versions/1.16.5 | 1.16.5 × Forge | 可构建 | 2026-10-05 BUILD SUCCESSFUL；commit 69cb258（FG4 + forge 1.16.5-36.2.39 + official mappings + JDK 8）。语义差异：无滚动菜单→>54 格拒绝打开（actionbar 提示）；存储走 BlockEntityTag.Items；自定义 item tag `handyshulkers:shulker_boxes` 数据包可扩展。运行时未实测（构建环境无 MC 客户端） |
 | versions/1.12.2 | 1.12.2 × Forge | 可构建 | 2026-10-05 BUILD SUCCESSFUL；commit 6502f42（FG2.3 + Gradle 4.9 + JDK 8 + stable_39；Forge 用 14.23.5.2847——2848+ 的 FG2.3 所需 userdev.jar 已 404）。语义差异：无 tags→白名单 extraShulkerBoxes；无滚动界面→>54 格拒绝打开；织布机/切石机/砂轮/制图台/锻造台（1.14+）不存在不做 |
-| versions/1.7.10 | 1.7.10 × Forge | 进行中 | 分支已建（自 main 8b5dc01），`1.7.10/forge` 子项目移植中；注意 1.7.10 无原版潜影盒，移植以"手持右键开功能方块 + 白名单模组盒"为语义基线 |
+| versions/1.7.10 | 1.7.10 × Forge | 可构建 | 2026-10-05 BUILD SUCCESSFUL；commit f8d347c（anatawa12 FG1.2 fork + Gradle 6.9.4 + JDK 8 + Forge 10.13.4.1614，reobf SRG 产物）。1.7.10 无原版潜影盒：识别层为 extraShulkerBoxes/largeBoxes 白名单 + NBT Items 启发式；>54 槽内容入隐藏区整包写回；织布机等 1.14+ 方块不做。运行时未实测 |
+| versions/1.20.1 | 1.20.1 × Fabric + Forge | 进行中 | 分支已建（自 main fb894d8），双子项目移植中（"其他热门版本"首选项：模组玩家基数最大版本线）；无 data components→NBT 存储，有 item tags→同 1.21 识别模型 |
