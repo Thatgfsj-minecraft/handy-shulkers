@@ -1,0 +1,62 @@
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+    }
+}
+apply plugin: 'net.minecraftforge.gradle.forge'
+
+version = '1.4.1'
+group = 'dev.handyshulkers'
+archivesBaseName = 'handyshulkers-forge-1.12.2'
+
+sourceCompatibility = targetCompatibility = '1.8'
+compileJava {
+    sourceCompatibility = targetCompatibility = '1.8'
+}
+
+minecraft {
+    // 14.23.5.2860/2859 only ship the FG3-style userdev3 artifact, which
+    // ForgeGradle 2.3 cannot consume; 2847 is the newest 1.12.2 build that
+    // still publishes the FG2-style userdev package.
+    version = '1.12.2-14.23.5.2847'
+    runDir = 'run'
+
+    // the mappings can be changed at any time, and must be in the following format.
+    // snapshot_YYYYMMDD   snapshot are built nightly.
+    // stable_#            stables are built at the discretion of the MCP team.
+    mappings = 'stable_39'
+
+    makeObfSourceJar = false
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title': 'handyshulkers',
+            'Specification-Version': '1',
+            'Implementation-Title': project.archivesBaseName,
+            'Implementation-Version': project.version
+        ])
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'mcversion', project.minecraft.version
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version, 'mcversion': project.minecraft.version
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}

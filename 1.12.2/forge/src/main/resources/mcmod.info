@@ -1,0 +1,16 @@
+[
+{
+  "modid": "handyshulkers",
+  "name": "Handy Shulkers",
+  "description": "Open shulker boxes (and other functional blocks) straight from your hand, sleep where you stand with a held bed, and keep big containers data-safe. 1.12.2 Forge port of the 1.21.x semantics.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Thatgfsj"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
