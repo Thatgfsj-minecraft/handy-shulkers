@@ -54,6 +54,18 @@ public final class SelfTest {
             ItemStackContainer afterRemoval = new ItemStackContainer(box, 27);
             expect("remove: apple removed cleanly", afterRemoval.getItem(1).isEmpty());
 
+            // Scrolling (54+) containers: content beyond slot 54 must survive
+            // the full-capacity write-back, since the scrolling menu always
+            // writes back every backing slot, not just the visible window.
+            ItemStack bigBox = new ItemStack(Items.SHULKER_BOX);
+            ItemStackContainer big = new ItemStackContainer(bigBox, 243);
+            big.setItem(0, new ItemStack(Items.DIAMOND));
+            big.setItem(242, new ItemStack(Items.NETHERITE_INGOT));
+            ItemStackContainer bigReopened = new ItemStackContainer(bigBox, 243);
+            expect("scroll: slot 0 survives round-trip", bigReopened.getItem(0).is(Items.DIAMOND));
+            expect("scroll: slot 242 survives round-trip", bigReopened.getItem(242).is(Items.NETHERITE_INGOT));
+            expect("scroll: middle slot untouched", bigReopened.getItem(100).isEmpty());
+
             HandyShulkers.LOGGER.info("[handyshulkers] SELF-TEST PASS: container round-trip OK");
         } catch (Throwable t) {
             HandyShulkers.LOGGER.error("[handyshulkers] SELF-TEST FAIL: {}", t.toString());

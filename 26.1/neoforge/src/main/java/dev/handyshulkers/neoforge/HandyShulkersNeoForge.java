@@ -4,22 +4,38 @@ import dev.handyshulkers.HandItemUse;
 import dev.handyshulkers.HandyShulkers;
 import dev.handyshulkers.HandyShulkersConfig;
 import dev.handyshulkers.SelfTest;
+import dev.handyshulkers.ScrollingMenu;
 import dev.handyshulkers.TempBedTracker;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.function.Supplier;
 
 @Mod(HandyShulkers.MOD_ID)
 public class HandyShulkersNeoForge {
 
-    public HandyShulkersNeoForge() {
+    public static final DeferredRegister<MenuType<?>> MENUS =
+            DeferredRegister.create(Registries.MENU, HandyShulkers.MOD_ID);
+    public static final Supplier<MenuType<ScrollingMenu>> SCROLLING_MENU =
+            MENUS.register("scrolling", () -> new MenuType<>(ScrollingMenu::clientCreate, FeatureFlags.VANILLA_SET));
+
+    public HandyShulkersNeoForge(IEventBus modEventBus) {
         HandyShulkersConfig.init(FMLPaths.CONFIGDIR.get().resolve("handyshulkers.json"));
+        MENUS.register(modEventBus);
+        modEventBus.addListener((FMLCommonSetupEvent event) -> ScrollingMenu.TYPE = SCROLLING_MENU.get());
         NeoForge.EVENT_BUS.register(HandyShulkersNeoForge.class);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) -> {
             SelfTest.runOnce();

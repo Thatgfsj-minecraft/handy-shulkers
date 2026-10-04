@@ -30,6 +30,15 @@ public final class HandyShulkersConfig {
     public boolean allowFakePlayers = false;
     /** Force the menu row count (1-6). -1 detects it from the item. */
     public int forceRows = -1;
+    /**
+     * Item id -&gt; backing capacity in slots for boxes larger than the 6-row
+     * menus. Listed boxes open in the scrolling UI even while their container
+     * component is still empty, because an empty component carries no capacity
+     * information. Shipped with the compressed shulker box of the
+     * compressed-blocks mod; edit freely.
+     */
+    public java.util.Map<String, Integer> largeBoxes = new java.util.LinkedHashMap<>(
+            java.util.Map.of("compressedblocks:compressed_shulker_box", 243));
 
     private static HandyShulkersConfig instance;
 
@@ -59,17 +68,43 @@ public final class HandyShulkersConfig {
                 // the instance without running constructors, so a key missing
                 // from the file would silently reset a declared default of
                 // true back to false.
+                // Each field gets its own guard: one malformed value keeps its
+                // default instead of wiping every user customization on the
+                // following save.
                 if (json.has("requireSneak")) {
-                    config.requireSneak = json.get("requireSneak").getAsBoolean();
+                    try {
+                        config.requireSneak = json.get("requireSneak").getAsBoolean();
+                    } catch (Exception ignored) {
+                    }
                 }
                 if (json.has("allowUnknownStorage")) {
-                    config.allowUnknownStorage = json.get("allowUnknownStorage").getAsBoolean();
+                    try {
+                        config.allowUnknownStorage = json.get("allowUnknownStorage").getAsBoolean();
+                    } catch (Exception ignored) {
+                    }
                 }
                 if (json.has("allowFakePlayers")) {
-                    config.allowFakePlayers = json.get("allowFakePlayers").getAsBoolean();
+                    try {
+                        config.allowFakePlayers = json.get("allowFakePlayers").getAsBoolean();
+                    } catch (Exception ignored) {
+                    }
                 }
                 if (json.has("forceRows")) {
-                    config.forceRows = json.get("forceRows").getAsInt();
+                    try {
+                        config.forceRows = json.get("forceRows").getAsInt();
+                    } catch (Exception ignored) {
+                    }
+                }
+                if (json.has("largeBoxes") && json.get("largeBoxes").isJsonObject()) {
+                    config.largeBoxes.clear();
+                    for (java.util.Map.Entry<String, com.google.gson.JsonElement> entry
+                            : json.getAsJsonObject("largeBoxes").entrySet()) {
+                        try {
+                            config.largeBoxes.put(entry.getKey(), entry.getValue().getAsInt());
+                        } catch (Exception ignored) {
+                            // a malformed capacity line must not kill the whole config
+                        }
+                    }
                 }
             } catch (Exception e) {
                 System.err.println("[" + HandyShulkers.MOD_ID + "] Failed to read config, using defaults: " + e);

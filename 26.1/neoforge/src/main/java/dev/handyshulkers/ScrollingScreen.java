@@ -1,0 +1,128 @@
+package dev.handyshulkers;
+
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Inventory;
+
+/**
+ * Six-row window over a large box, visually identical to the vanilla 6-row
+ * chest: the background is the vanilla generic_54 texture (same two-segment
+ * blit as the vanilla container screen) and the scroll bar reuses the vanilla
+ * creative-tab scroller sprites. Scrolling is a purely local viewport move —
+ * wheel steps one row, clicking the track pages a whole window, dragging the
+ * thumb follows continuously; no packet is ever sent.
+ *
+ * <p>26.x note: drawing goes through the extraction pipeline — screens record
+ * into a {@link GuiGraphicsExtractor}; the panel is drawn in
+ * {@code extractBackground}, exactly where vanilla ContainerScreen draws its
+ * texture, and imageWidth/imageHeight are constructor-final.
+ */
+public class ScrollingScreen extends AbstractContainerScreen<ScrollingMenu> {
+
+    /** Vanilla 6-row chest background (generic_54: v0..rows*18+17 top band, v126.. backpack area). */
+    private static final Identifier BACKGROUND =
+            Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
+    /** Vanilla creative scroll bar (12×15 thumb) and list track background. */
+    private static final Identifier SCROLLER = Identifier.withDefaultNamespace("container/creative_inventory/scroller");
+    private static final Identifier SCROLLER_BG = Identifier.withDefaultNamespace("widget/scroller_background");
+    private static final int PANEL_W = 176;
+    /** Vanilla panel gray (198,198,198). */
+    private static final int VANILLA_GRAY = 0xFFC6C6C6;
+    private static final int TRACK_X = 178, TRACK_Y = ScrollingMenu.WINDOW_Y, TRACK_W = 12, TRACK_H = 106;
+    private static final int THUMB_H = 15;
+
+    /** Mouse-y minus thumb top while dragging the slider; -1 = not dragging. */
+    private double dragOffset = -1;
+
+    public ScrollingScreen(ScrollingMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title, 194, 222);
+        this.inventoryLabelY = 128;
+    }
+
+    @Override
+    public void extractBackground(GuiGraphicsExtractor gfx, int mouseX, int mouseY, float partialTick) {
+        super.extractBackground(gfx, mouseX, mouseY, partialTick);
+        // vanilla two-segment container background (6-row window + backpack area)
+        gfx.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND,
+                this.leftPos, this.topPos, 0.0F, 0.0F, PANEL_W,
+                ScrollingMenu.VIEW_ROWS * 18 + 17, 256, 256);
+        gfx.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND,
+                this.leftPos, this.topPos + ScrollingMenu.VIEW_ROWS * 18 + 17,
+                0.0F, 126.0F, PANEL_W, 96, 256, 256);
+        // right panel: vanilla gray extension with black outline (top/right/bottom)
+        int rx = this.leftPos + PANEL_W;
+        gfx.fill(rx, this.topPos, rx + 17, this.topPos + 1, 0xFF000000);
+        gfx.fill(rx, this.topPos + 1, rx + 17, this.topPos + 221, VANILLA_GRAY);
+        gfx.fill(rx + 16, this.topPos, rx + 17, this.topPos + 222, 0xFF000000);
+        gfx.fill(rx, this.topPos + 221, rx + 17, this.topPos + 222, 0xFF000000);
+        // scroll bar: vanilla sprites, thumb follows the local viewport
+        gfx.blitSprite(RenderPipelines.GUI_TEXTURED, SCROLLER_BG,
+                this.leftPos + TRACK_X, this.topPos + TRACK_Y, TRACK_W, TRACK_H);
+        gfx.blitSprite(RenderPipelines.GUI_TEXTURED, SCROLLER,
+                this.leftPos + TRACK_X, this.thumbTop(), TRACK_W, THUMB_H);
+    }
+
+    private int thumbTop() {
+        int maxRow = this.menu.getMaxRow();
+        if (maxRow <= 0) {
+            return this.topPos + TRACK_Y;
+        }
+        return this.topPos + TRACK_Y
+                + this.menu.getScrollRow() * (TRACK_H - THUMB_H) / maxRow;
+    }
+
+    /** Mouse y -> viewport first row. */
+    private int rowAt(double mouseY) {
+        int maxRow = this.menu.getMaxRow();
+        if (maxRow <= 0) {
+            return 0;
+        }
+        return Math.round((float) (mouseY - (this.topPos + TRACK_Y) - THUMB_H / 2.0)
+                / (TRACK_H - THUMB_H) * maxRow);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        this.menu.setScrollRowLocal(this.menu.getScrollRow() + (scrollY > 0 ? -1 : 1));
+        return true;
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() != 0) {
+            return super.mouseClicked(event, doubled);
+        }
+        double mouseX = event.x(), mouseY = event.y();
+        int tx = this.leftPos + TRACK_X, ty = this.topPos + TRACK_Y;
+        if (mouseX >= tx && mouseX < tx + TRACK_W && mouseY >= ty && mouseY < ty + TRACK_H) {
+            int thumb = this.thumbTop();
+            if (mouseY < thumb || mouseY >= thumb + THUMB_H) {
+                // track click off the thumb: page the whole window up/down
+                this.menu.setScrollRowLocal(this.menu.getScrollRow()
+                        + (mouseY < thumb ? -ScrollingMenu.VIEW_ROWS : ScrollingMenu.VIEW_ROWS));
+            }
+            this.dragOffset = mouseY - this.thumbTop();
+            return true;
+        }
+        return super.mouseClicked(event, doubled);
+    }
+
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (this.dragOffset >= 0) {
+            this.menu.setScrollRowLocal(this.rowAt(event.y() - this.dragOffset));
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(MouseButtonEvent event) {
+        this.dragOffset = -1;
+        return super.mouseReleased(event);
+    }
+}

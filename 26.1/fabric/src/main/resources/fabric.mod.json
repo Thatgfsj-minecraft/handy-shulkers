@@ -12,6 +12,9 @@
   "entrypoints": {
     "main": [
       "dev.handyshulkers.fabric.HandyShulkersFabric"
+    ],
+    "client": [
+      "dev.handyshulkers.fabric.HandyShulkersFabricClient"
     ]
   },
   "depends": {

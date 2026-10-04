@@ -73,7 +73,7 @@ public final class HandItemUse {
         if (stack.isEmpty()) {
             return false;
         }
-        if (stack.is(HandyShulkers.SHULKER_BOXES) || stack.is(HandyShulkers.BEDS)
+        if (stack.is(HandyShulkers.SHULKER_BOXES) || isLargeBox(stack) || stack.is(HandyShulkers.BEDS)
                 || stack.is(HandyShulkers.ENDER_CHESTS)) {
             return true;
         }
@@ -83,6 +83,17 @@ public final class HandItemUse {
             }
         }
         return false;
+    }
+
+    /**
+     * True for items declared in the config's largeBoxes map: they are treated
+     * as shulker-box-like big containers without needing any tag — this is how
+     * untagged third-party boxes (e.g. compressed-blocks' compressed shulker
+     * box) open from the hand.
+     */
+    private static boolean isLargeBox(ItemStack stack) {
+        return HandyShulkersConfig.get().largeBoxes.containsKey(
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
     }
 
     public static InteractionResult useFromHand(Player player, ItemStack stack) {
@@ -109,7 +120,7 @@ public final class HandItemUse {
             return InteractionResult.PASS;
         }
 
-        if (stack.is(HandyShulkers.SHULKER_BOXES)) {
+        if (stack.is(HandyShulkers.SHULKER_BOXES) || isLargeBox(stack)) {
             return ShulkerOpenLogic.openMenu(serverPlayer, stack);
         }
         if (stack.is(HandyShulkers.BEDS)) {
