@@ -11,9 +11,9 @@
 | versions/1.21.8 | 1.21.8 × Fabric + NeoForge | snapshot | 自 main 快照（f860522），构建未验证 |
 | versions/1.21.9 | 1.21.9 × Fabric + NeoForge | snapshot | 自 main 快照（f860522）；1.21.9 NeoForge 官方仅 beta（21.9.16-beta） |
 | versions/1.21.10 | 1.21.10 × Fabric + NeoForge | snapshot | 自 main 快照（f860522），构建未验证 |
-| versions/26.1 | 26.1 × Fabric + NeoForge | 进行中 | 已有代码但从未构建；JDK 25 + fabric-loom 新插件 id `net.fabricmc.fabric-loom` |
+| versions/26.1 | 26.1 × Fabric + NeoForge | 可构建 | 2026-10-05 双子项目 BUILD SUCCESSFUL；commit c7f1262（移植 1.4.1 缺失语义：ScrollingMenu/Screen、256 钳制、largeBoxes、SelfTest 扩展；Screen 按 26.1 提取式渲染管线重写，GuiGraphics 已删除）。26.2/26.3 分支若用 GuiGraphics 写法需参考本分支适配 |
 | versions/26.2 | 26.2 × Fabric + NeoForge | 可构建 | 2026-10-05 双子项目 BUILD SUCCESSFUL @ f860522，分支代码零改动即通过（fabric/neoforge jar 各 1 枚）；注意：Loom 1.18.2 需 Gradle daemon JVM ≥25 |
 | versions/26.3 | 26.3 × Fabric + NeoForge | 可构建 | 2026-10-05 fabric 零改动即过、neoforge 首次 NeoForm 反编译后通过 @ f860522；26.3.0.37-beta 实测可解析。注：C 盘近满，隔离缓存已迁 `O:\clawwork\.gradle-handyshulkers`，后续构建一律用它 |
 | versions/1.16.5 | 1.16.5 × Forge | 进行中 | 分支已建（自 main f3fbea6），`1.16.5/forge` 子项目移植中；构建配方只读参考 compressed-blocks 1.16.5/forge |
-| versions/1.12.2 | 1.12.2 × Forge | 候选 | 排在 1.16.5 之后 |
+| versions/1.12.2 | 1.12.2 × Forge | 进行中 | 分支已建（自 main 7bf4b3e），`1.12.2/forge` 子项目移植中；配方 FG2.3+Gradle4.9+JDK8 或 RetroFuturaGradle 择可达者 |
 | versions/1.7.10 | 1.7.10 × Forge | 候选 | 排在 1.12.2 之后 |
