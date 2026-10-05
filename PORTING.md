@@ -19,11 +19,12 @@
 | versions/1.12.2 | 1.12.2 × Forge | 可构建 | 2026-10-05 BUILD SUCCESSFUL；commit 6502f42（FG2.3 + Gradle 4.9 + JDK 8 + stable_39；Forge 用 14.23.5.2847——2848+ 的 FG2.3 所需 userdev.jar 已 404）。语义差异：无 tags→白名单 extraShulkerBoxes；无滚动界面→>54 格拒绝打开；织布机/切石机/砂轮/制图台/锻造台（1.14+）不存在不做 |
 | versions/1.7.10 | 1.7.10 × Forge | 可构建 | 2026-10-05 BUILD SUCCESSFUL；commit f8d347c（anatawa12 FG1.2 fork + Gradle 6.9.4 + JDK 8 + Forge 10.13.4.1614，reobf SRG 产物）。1.7.10 无原版潜影盒：识别层为 extraShulkerBoxes/largeBoxes 白名单 + NBT Items 启发式；>54 槽内容入隐藏区整包写回；织布机等 1.14+ 方块不做。运行时未实测 |
 | versions/1.20.1 | 1.20.1 × Fabric + Forge | 可构建 | 2026-10-05 双子项目 BUILD SUCCESSFUL；commit bff62b0（Loom 1.17.21 + FG6 + Gradle 8.8/9.8 + JDK 17 toolchain；fabric-api 0.92.12+1.20.1 / forge 47.4.26 均末期版）。无 data components→NBT `BlockEntityTag.Items` 存储（256 钳制等价）；有 item tags→tag+instanceof 双通道；>54 格滚动界面已随版本移植（GuiGraphics 渲染按 1.20.1 改写）。运行时未实测 |
+| versions/1.19.2 | 1.19.2 × Fabric + Forge | 可构建 | 2026-10-05 双子项目 BUILD SUCCESSFUL；commit 3ad3ad0（Loom 1.17.21 + FG6.0.54 锁版 + Gradle 8.8/9.8 + JDK 17；fabric-api 0.77.0+1.19.2 / forge 43.5.2 均末期）。最大适配：**pre-GuiGraphics**——ScrollingScreen 按 PoseStack 直绘重写（1.19.4 才有 GuiGraphics）；存储走 NBT `BlockEntityTag.Items`；tags 复数目录。运行时未实测 |
+| versions/1.18.2 | 1.18.2 × Fabric + Forge | 进行中 | 分支已建（自 main 3b76661），双子项目移植中；FG5 + Gradle 7.6 时代配方，pre-GuiGraphics 同 1.19.2 |
 
 ## 剩余候选与推荐顺序
 
-1. **1.19.2 × Fabric + Forge**——模组玩家基数第二的版本线，配方与本轮 1.20.1 高度同构（Loom + FG6，JDK 17），预计成本低
-2. **1.18.2 × Fabric + Forge**——1.19 前留存的模组生态，配方同上（FG5 + Gradle 8/官方 mappings）
-3. **全分支运行时冒烟**——各分支 `runClient`/`runServer` 验证 `SELF-TEST` 日志与滚动界面手感（本轮只验证到编译打包）
-4. **1.21.9 NeoForge beta→正式版升级复验**（21.9.16-beta）；26.x 各 beta 同理
-5. **versions/* 分支 CI**——把 `ci/build.yml` 落到各分支 `.github/workflows/`（或单工作流 matrix 扫 versions/*），使"可构建"状态在 CI 持续受保护
+1. **全分支运行时冒烟**——各分支 `runServer` 验证 `SELF-TEST` 日志（1.20.1/1.19.2/主仓 core 优先）；`runClient` 目检滚动界面与睡床交互
+2. **CI 首轮结果跟进**——13 个工作流已触发，跑红的分支按报错修配方
+3. **1.21.9 NeoForge beta→正式版升级复验**（21.9.16-beta，截至 2026-10-05 仍无正式版）；26.x beta 同理
+4. **1.18.2 之后的候选**：1.21.x 更早版本（1.20.4/1.20.6）视需求补
