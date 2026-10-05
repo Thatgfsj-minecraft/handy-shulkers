@@ -22,6 +22,38 @@ java {
 
 minecraft {
     mappings channel: 'official', version: '1.19.2'
+
+    // Standard MDK dev-run configurations (FG6 template shape): without this
+    // block ForgeGradle creates no runServer/runClient tasks, so a fresh clone
+    // cannot launch the mod in a dev environment.
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+
+            // "SCAN": For mods scan.
+            // "REGISTRIES": For firing of registry events.
+            // "REGISTRYDUMP": For getting the contents of all registries.
+            property 'forge.logging.markers', 'REGISTRIES'
+
+            // Recommended logging level for the console.
+            property 'forge.logging.console.level', 'info'
+
+            mods {
+                handyshulkers {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+            environment 'target', 'client'
+        }
+
+        server {
+            environment 'target', 'server'
+            args '--nogui'
+        }
+    }
 }
 
 repositories {
