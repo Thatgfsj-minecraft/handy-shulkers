@@ -1,0 +1,59 @@
+plugins {
+    // pinned to the exact 6.0.54 so the build resolves from the local Gradle
+    // cache when maven.minecraftforge.net is unreachable (the [6.0,6.2) range
+    // would force a metadata lookup first)
+    id 'net.minecraftforge.gradle' version '6.0.54'
+}
+
+version = '1.4.1'
+group = 'dev.handyshulkers'
+
+base {
+    archivesName = 'handyshulkers-forge-1.19.2'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.19.2'
+}
+
+repositories {
+    // mirror fallback for the Forge-hosted runtime modules (fmlcore, fmlloader,
+    // eventbus, ...): FG6's own forge-maven repo is tried first, this one only
+    // serves when that fails
+    maven {
+        name = 'BMCLAPI-USTC'
+        url = 'https://mirrors.ustc.edu.cn/bmclapi/'
+        content {
+            includeGroupByRegex 'net\\.minecraftforge.*'
+            includeGroup 'de.oceanlabs.mcp'
+        }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title': 'handyshulkers',
+            'Specification-Version': '1',
+            'Implementation-Title': project.base.archivesName.get(),
+            'Implementation-Version': project.version
+        ])
+    }
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
