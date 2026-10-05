@@ -66,7 +66,7 @@ GRADLE_USER_HOME=~/.gradle-handyshulkers ./gradlew build
 
 > 26.x 子项目（在 `versions/26.x` 分支上）需要 JDK 25（Gradle daemon 与编译都在 25 上），Fabric 侧使用 Loom 1.18.2 新插件 id `net.fabricmc.fabric-loom`（无映射行、依赖用 `implementation`）、Gradle ≥9.7。
 
-CI 工作流位于 `ci/build.yml`。启用方法：把它移动到 `.github/workflows/build.yml` 后 push，之后每次 push 会自动构建，产物在 Actions 页面的 Artifacts 中下载。
+CI 工作流已启用：`.github/workflows/build.yml`（即原 `ci/build.yml` 移入），每次 push 自动构建 core 4，产物在 Actions 页面的 Artifacts 中下载。各 `versions/*` 分支各自携带对应的 `.github/workflows/build.yml`（矩阵为该分支的子项目）。
 
 > 本地构建提示：如果你的机器配置了全局 Gradle 镜像 init 脚本（如阿里云镜像），NeoForge 相关依赖可能解析失败，务必用独立的 GRADLE_USER_HOME 构建。
 
