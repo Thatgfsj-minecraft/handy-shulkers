@@ -20,11 +20,11 @@
 | versions/1.7.10 | 1.7.10 × Forge | 可构建 | 2026-10-05 BUILD SUCCESSFUL；commit f8d347c（anatawa12 FG1.2 fork + Gradle 6.9.4 + JDK 8 + Forge 10.13.4.1614，reobf SRG 产物）。1.7.10 无原版潜影盒：识别层为 extraShulkerBoxes/largeBoxes 白名单 + NBT Items 启发式；>54 槽内容入隐藏区整包写回；织布机等 1.14+ 方块不做。运行时未实测 |
 | versions/1.20.1 | 1.20.1 × Fabric + Forge | 可构建 | 2026-10-05 双子项目 BUILD SUCCESSFUL；commit bff62b0（Loom 1.17.21 + FG6 + Gradle 8.8/9.8 + JDK 17 toolchain；fabric-api 0.92.12+1.20.1 / forge 47.4.26 均末期版）。无 data components→NBT `BlockEntityTag.Items` 存储（256 钳制等价）；有 item tags→tag+instanceof 双通道；>54 格滚动界面已随版本移植（GuiGraphics 渲染按 1.20.1 改写）。运行时未实测 |
 | versions/1.19.2 | 1.19.2 × Fabric + Forge | 可构建 | 2026-10-05 双子项目 BUILD SUCCESSFUL；commit 3ad3ad0（Loom 1.17.21 + FG6.0.54 锁版 + Gradle 8.8/9.8 + JDK 17；fabric-api 0.77.0+1.19.2 / forge 43.5.2 均末期）。最大适配：**pre-GuiGraphics**——ScrollingScreen 按 PoseStack 直绘重写（1.19.4 才有 GuiGraphics）；存储走 NBT `BlockEntityTag.Items`；tags 复数目录。运行时未实测 |
-| versions/1.18.2 | 1.18.2 × Fabric + Forge | 进行中 | 分支已建（自 main 3b76661），双子项目移植中；FG5 + Gradle 7.6 时代配方，pre-GuiGraphics 同 1.19.2 |
+| versions/1.18.2 | 1.18.2 × Fabric + Forge | 可构建 | 2026-10-05 双子项目 BUILD SUCCESSFUL；commit 2ff6560（Loom 1.17.21 + FG5.1.77 + Gradle 9.8/7.6.4 + JDK 17；fabric-api 0.77.0+1.18.2 / forge 40.3.12 末期）。pre-GuiGraphics PoseStack 直绘；NBT 存储；1.18.2 无 `#minecraft:shulker_boxes` item tag（1.19.4+），模组盒走 `#c:` 或数据包扩展。运行时未实测 |
 
 ## 剩余候选与推荐顺序
 
-1. **全分支运行时冒烟**——各分支 `runServer` 验证 `SELF-TEST` 日志（1.20.1/1.19.2/主仓 core 优先）；`runClient` 目检滚动界面与睡床交互
-2. **CI 首轮结果跟进**——13 个工作流已触发，跑红的分支按报错修配方
+1. **全分支运行时冒烟**——各分支 `runServer` 验证 `SELF-TEST` 日志：第一批（1.20.1×2 / 1.19.2×2 / 主仓 core 4）与第二批（1.18.2×2 / 1.21.4/fabric / 26.2/fabric）进行中；`runClient` 目检滚动界面与睡床交互待做
+2. **CI 首轮结果跟进**——main + 全部 14 个 versions/* 分支均已携带 `.github/workflows/build.yml`（JDK/Gradle 矩阵按分支配方定制），跑红的分支按报错修配方
 3. **1.21.9 NeoForge beta→正式版升级复验**（21.9.16-beta，截至 2026-10-05 仍无正式版）；26.x beta 同理
-4. **1.18.2 之后的候选**：1.21.x 更早版本（1.20.4/1.20.6）视需求补
+4. **更早版本候选**：1.20.4/1.20.6、1.19.4 视需求补
