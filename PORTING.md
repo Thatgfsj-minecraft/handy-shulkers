@@ -3,7 +3,7 @@
 > 仓库结构：`main` 只保留 4 个核心 CI 子项目（`1.21.1/fabric`、`1.21.1/neoforge`、`1.21.11/fabric`、`1.21.11/neoforge`）；其余版本各自以 `versions/*` 分支维护（自 main 快照）。
 > 状态含义：**snapshot** = 快照已建、未动工；**进行中** = 移植/构建修复中；**可构建** = `./gradlew build` 通过并已推送；**BLOCKED** = 受阻（附原因）。
 > 规则：只在 `./gradlew build` 通过后才提交推送；构建不了标 BLOCKED 并写明原因，禁止提交半成品。
-> ⚠️ 运行时验证进行中：headless `runServer` 冒烟已通过——1.20.1（fabric+forge）、1.19.2（fabric+forge）、main 的 1.21.1/fabric 与 1.21.11/fabric（服务器启动至 Done，日志 `SELF-TEST PASS: container round-trip OK`）；其余分支仍止于编译验证。
+> ⚠️ 运行时验证进行中：headless `runServer` 冒烟已通过 10/10——1.20.1（fabric+forge）、1.19.2（fabric+forge）、1.18.2（fabric+forge）、1.21.4/fabric、26.2/fabric、main 的 1.21.1/fabric 与 1.21.11/fabric（服务器启动至 Done，日志 `SELF-TEST PASS: container round-trip OK`）；其余分支仍止于编译验证。已发现并修复中：forge 子项目缺 pack.mcmeta 导致 data/ 标签不生效（"Missing data pack"）、FG 系缺 runs{} 配置。
 
 | 分支 | 版本 / 加载器 | 状态 | 说明 |
 |---|---|---|---|
