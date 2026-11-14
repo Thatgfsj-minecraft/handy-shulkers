@@ -151,6 +151,16 @@ public class ScrollingMenu extends AbstractContainerMenu {
         public boolean mayPlace(ItemStack stack) {
             return playable() && !ItemStackContainer.isContainerItem(stack);
         }
+
+        @Override
+        public int getMaxStackSize() {
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public int getMaxStackSize(ItemStack stack) {
+            return stack.getMaxStackSize();
+        }
     }
 
     @Override
