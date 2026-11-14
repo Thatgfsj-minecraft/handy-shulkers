@@ -65,7 +65,12 @@ public class ItemStackContainer implements Container {
 
     @Override
     public int getMaxStackSize() {
-        return 64;
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public int getMaxStackSize(ItemStack stack) {
+        return stack.getMaxStackSize();
     }
 
     @Override
